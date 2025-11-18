@@ -225,6 +225,15 @@ export interface RegisterData {
   address?: string
 }
 
+export interface CreateUserAdminData {
+  email: string
+  password: string
+  name: string
+  phone: string
+  role: UserRole
+  address?: string
+}
+
 export interface AuthResponse {
   access_token: string
   refresh_token: string

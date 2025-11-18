@@ -17,6 +17,11 @@ export const authService = {
     return data
   },
 
+  registerUserOnly: async (userData: RegisterData): Promise<User> => {
+    const { data } = await apiClient.post<AuthResponse>('/auth/register', userData)
+    return data.user
+  },
+
   logout: async (): Promise<void> => {
     try {
       await apiClient.post('/auth/logout')

@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client'
-import type { User, PaginationParams, PaginatedResponse } from '@/types'
+import type { User, PaginationParams, PaginatedResponse, CreateUserAdminData } from '@/types'
 
 export const usersService = {
   getUsers: async (params?: PaginationParams): Promise<User[]> => {
@@ -9,6 +9,11 @@ export const usersService = {
 
   getUser: async (id: string): Promise<User> => {
     const { data } = await apiClient.get<User>(`/users/${id}`)
+    return data
+  },
+
+  createUser: async (userData: CreateUserAdminData): Promise<User> => {
+    const { data } = await apiClient.post<User>('/users', userData)
     return data
   },
 
@@ -22,8 +27,8 @@ export const usersService = {
     return data
   },
 
-  toggleVerification: async (id: string): Promise<User> => {
-    const { data } = await apiClient.patch<User>(`/users/${id}/verify`)
+  toggleVerification: async (id: string, isVerified: boolean): Promise<User> => {
+    const { data } = await apiClient.patch<User>(`/users/${id}/verify`, { isVerified })
     return data
   },
 

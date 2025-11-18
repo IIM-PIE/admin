@@ -1,0 +1,277 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Couleurs de base - Basées sur les maquettes AutoImport Italia */
+    --background: 214 32% 95%; /* Gris-bleu très clair (background général de l'app) */
+    --foreground: 217 33% 17%; /* Bleu marine très foncé (texte principal) */
+
+    /* Cartes et surfaces */
+    --card: 0 0% 100%; /* Blanc pur pour les cartes */
+    --card-foreground: 217 33% 17%;
+
+    /* Popovers */
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 33% 17%;
+
+    /* Couleur primaire (Rouge AutoImport - bouton "Commencer") */
+    --primary: 4 89% 58%; /* Rouge coral vif */
+    --primary-foreground: 0 0% 100%; /* Blanc pour le texte sur rouge */
+
+    /* Couleur secondaire (Bleu marine foncé - header) */
+    --secondary: 217 33% 17%; /* Bleu marine très foncé du header */
+    --secondary-foreground: 0 0% 100%;
+
+    /* Navy background (fond du header et sections sombres) */
+    --navy: 217 35% 23%; /* Bleu marine moyen */
+    --navy-foreground: 0 0% 100%;
+
+    /* Muted (éléments discrets) */
+    --muted: 210 20% 92%; /* Gris clair légèrement bleuté */
+    --muted-foreground: 215 16% 47%; /* Gris moyen pour textes secondaires */
+
+    /* Accent (Bleu vif des icônes - icône recherche) */
+    --accent: 217 100% 50%; /* Bleu électrique des icônes principales */
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive (Rouge d'alerte et statuts "En cours") */
+    --destructive: 4 89% 58%; /* Rouge coral */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success (Vert de validation - badges "Terminé", "Validé") */
+    --success: 142 76% 36%; /* Vert forêt des badges de succès */
+    --success-foreground: 0 0% 100%;
+
+    /* En cours (Rouge pour les statuts "En cours") */
+    --in-progress: 4 89% 58%; /* Rouge coral */
+    --in-progress-foreground: 0 0% 100%;
+
+    /* Warning (Orange pour les alertes et notifications) */
+    --warning: 36 100% 50%; /* Orange vif */
+    --warning-foreground: 217 33% 17%;
+
+    /* Info (Violet pour l'icône documents) */
+    --info: 271 81% 56%; /* Violet vif des icônes documents */
+    --info-foreground: 0 0% 100%;
+
+    /* Transport (Vert pour l'icône de transport) */
+    --transport: 142 76% 36%; /* Vert forêt */
+    --transport-foreground: 0 0% 100%;
+
+    /* Bordures et inputs */
+    --border: 214 20% 88%; /* Bordures subtiles gris-bleu */
+    --input: 214 20% 88%;
+    --ring: 217 100% 50%; /* Focus ring en bleu vif */
+
+    /* Radius - Bordures généreuses comme dans l'app mobile */
+    --radius: 1.25rem; /* 20px - Bordures bien arrondies des cartes */
+
+    /* Beige/Crème pour les zones de notification */
+    --notification-bg: 35 100% 94%; /* Fond beige clair des notifications */
+    --notification-border: 35 100% 85%; /* Bordure beige */
+
+    /* Chart colors */
+    --chart-1: 217 100% 50%; /* Bleu électrique */
+    --chart-2: 142 76% 36%; /* Vert forêt */
+    --chart-3: 4 89% 58%; /* Rouge coral */
+    --chart-4: 271 81% 56%; /* Violet */
+    --chart-5: 36 100% 50%; /* Orange */
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Style pour les headers avec le dégradé bleu marine (comme écran d'accueil) */
+  .header-gradient {
+    background: linear-gradient(180deg, hsl(217 33% 17%) 0%, hsl(217 35% 25%) 100%);
+  }
+
+  /* Effet de glassmorphism pour les cartes */
+  .card-glass {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid hsl(var(--border));
+  }
+
+  /* Style pour les badges de statut (comme dans "Suivi d'importation") */
+  .badge-success,
+  .badge-validated {
+    @apply bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))];
+    border-radius: 1rem;
+    padding: 0.375rem 0.875rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .badge-in-progress,
+  .badge-en-cours {
+    @apply bg-[hsl(var(--in-progress))] text-[hsl(var(--in-progress-foreground))];
+    border-radius: 1rem;
+    padding: 0.375rem 0.875rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .badge-pending,
+  .badge-a-envoyer {
+    @apply bg-gray-400 text-white;
+    border-radius: 1rem;
+    padding: 0.375rem 0.875rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .badge-warning {
+    @apply bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))];
+    border-radius: 1rem;
+    padding: 0.375rem 0.875rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .badge-info {
+    @apply bg-[hsl(var(--accent))] text-white;
+    border-radius: 1rem;
+    padding: 0.375rem 0.875rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  /* Cartes d'action avec icônes colorées (comme écran principal) */
+  .action-card {
+    @apply bg-card rounded-[var(--radius)] p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer;
+    border: 1px solid hsl(var(--border));
+  }
+
+  .action-card-icon {
+    @apply rounded-2xl p-4 flex items-center justify-center;
+    width: 64px;
+    height: 64px;
+  }
+
+  .action-card-icon.blue {
+    background-color: hsl(217 100% 50%);
+  }
+
+  .action-card-icon.green {
+    background-color: hsl(142 76% 36%);
+  }
+
+  .action-card-icon.purple {
+    background-color: hsl(271 81% 56%);
+  }
+
+  /* Zone de notification/alerte (comme le bandeau de transport en cours) */
+  .notification-card {
+    @apply rounded-[var(--radius)] p-4;
+    background-color: hsl(var(--notification-bg));
+    border: 2px solid hsl(var(--notification-border));
+  }
+
+  .notification-card.en-cours {
+    border-color: hsl(var(--in-progress));
+    border-width: 2px;
+  }
+
+  /* Timeline vertical (pour le suivi d'importation) */
+  .timeline-item {
+    position: relative;
+    padding-left: 3rem;
+    padding-bottom: 2rem;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 1.75rem;
+    top: 3.5rem;
+    bottom: 0;
+    width: 2px;
+    background-color: hsl(var(--border));
+  }
+
+  .timeline-item:last-child::before {
+    display: none;
+  }
+
+  .timeline-icon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .timeline-icon.completed {
+    background-color: hsl(var(--success));
+    color: white;
+  }
+
+  .timeline-icon.in-progress {
+    background-color: hsl(var(--in-progress));
+    color: white;
+  }
+
+  .timeline-icon.pending {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+  }
+}
+
+/* Classes utilitaires personnalisées pour AutoImport Italia */
+@layer utilities {
+  .text-brand-navy {
+    color: hsl(218 54% 20%);
+  }
+  
+  .bg-brand-navy {
+    background-color: hsl(218 54% 25%);
+  }
+  
+  .text-brand-red {
+    color: hsl(355 85% 55%);
+  }
+  
+  .bg-brand-red {
+    background-color: hsl(355 85% 55%);
+  }
+  
+  .text-brand-blue {
+    color: hsl(217 91% 60%);
+  }
+  
+  .bg-brand-blue {
+    background-color: hsl(217 91% 60%);
+  }
+  
+  .text-brand-green {
+    color: hsl(142 71% 45%);
+  }
+  
+  .bg-brand-green {
+    background-color: hsl(142 71% 45%);
+  }
+  
+  .text-brand-purple {
+    color: hsl(271 76% 53%);
+  }
+  
+  .bg-brand-purple {
+    background-color: hsl(271 76% 53%);
+  }
+}

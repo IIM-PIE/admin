@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import {
   Card,
@@ -45,8 +44,8 @@ function ConversationsPage() {
     )
   }
 
-  const unreadCount = conversations?.filter((c) => !c.isRead).length || 0
-  const totalMessages = conversations?.reduce((sum, c) => sum + (c.messageCount || 0), 0) || 0
+  const unreadCount = conversations?.reduce((sum, c) => sum + c.unreadCount, 0) || 0
+  const totalMessages = conversations?.reduce((sum, c) => sum + (c.messages?.length || 0), 0) || 0
 
   return (
     <DashboardLayout>
@@ -121,20 +120,20 @@ function ConversationsPage() {
                   <div
                     key={conversation.id}
                     className={`flex items-start gap-4 p-4 rounded-lg border ${
-                      !conversation.isRead ? 'bg-muted/50' : ''
+                      conversation.unreadCount > 0 ? 'bg-muted/50' : ''
                     }`}
                   >
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium leading-none">
-                          {conversation.subject || 'Sans sujet'}
+                          {conversation.vehicleDescription || 'Sans sujet'}
                         </p>
-                        {!conversation.isRead && (
-                          <Badge variant="warning">Nouveau</Badge>
+                        {conversation.unreadCount > 0 && (
+                          <Badge variant="warning">Nouveau ({conversation.unreadCount})</Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {conversation.messageCount || 0} message{(conversation.messageCount || 0) > 1 ? 's' : ''}
+                        {conversation.messages?.length || 0} message{(conversation.messages?.length || 0) > 1 ? 's' : ''}
                         {' • '}
                         {conversation.lastMessageAt
                           ? new Date(conversation.lastMessageAt).toLocaleDateString('fr-FR')
@@ -146,7 +145,7 @@ function ConversationsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          if (!conversation.isRead) {
+                          if (conversation.unreadCount > 0) {
                             markAsReadMutation.mutate(conversation.id)
                           }
                         }}

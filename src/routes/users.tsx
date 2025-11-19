@@ -136,7 +136,7 @@ function AddUserForm({ onClose }: { onClose: () => void }) {
     email: "",
     phone: "",
     password: generatePassword(Math.floor(Math.random() * 5) + 8), // 8-12 caractères
-    role: "" as "" | "customer" | "admin" | "agent",
+    role: "customer" as "customer" | "admin" | "agent",
     address: "",
   });
 
@@ -186,7 +186,6 @@ function AddUserForm({ onClose }: { onClose: () => void }) {
                       isValidEmail(formData.email) &&
                       phoneNumber.trim() !== "" &&
                       isValidPhone() &&
-                      formData.role !== "" &&
                       formData.password.trim() !== "";
 
   const createMutation = useMutation({
@@ -470,8 +469,7 @@ function EditUserForm({ user, onClose }: { user: any; onClose: () => void }) {
   const isFormValid = formData.name.trim() !== "" &&
                       isValidEmail(formData.email) &&
                       phoneNumber.trim() !== "" &&
-                      isValidPhone() &&
-                      formData.role !== "";
+                      isValidPhone();
 
   const updateMutation = useMutation({
     mutationFn: (data: any) => usersService.updateUser(user.id, data),

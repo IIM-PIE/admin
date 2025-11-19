@@ -42,10 +42,7 @@ function NotificationsPage() {
     queryFn: () => notificationsService.getNotifications(),
   })
 
-  const { data: unreadCount } = useQuery({
-    queryKey: ['notifications', 'unread-count'],
-    queryFn: () => notificationsService.getUnreadCount(),
-  })
+  const unreadCount = notifications?.filter(n => !n.isRead).length || 0
 
   const markAsReadMutation = useMutation({
     mutationFn: notificationsService.markAsRead,

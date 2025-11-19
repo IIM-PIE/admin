@@ -65,8 +65,8 @@ function SellersPage() {
     )
   }
 
-  const verifiedCount = sellers?.filter((s) => s.isVerified).length || 0
-  const totalVehicles = sellers?.reduce((sum, s) => sum + (s.vehicleCount || 0), 0) || 0
+  const verifiedCount = sellers?.filter((s) => s.verified).length || 0
+  const totalVehicles = 0
 
   return (
     <DashboardLayout>
@@ -156,14 +156,14 @@ function SellersPage() {
                   {sellers.map((seller) => (
                     <TableRow key={seller.id}>
                       <TableCell className="font-medium">{seller.name}</TableCell>
-                      <TableCell>{seller.company || '-'}</TableCell>
-                      <TableCell>{seller.email}</TableCell>
+                      <TableCell>{seller.type}</TableCell>
+                      <TableCell>{seller.email || '-'}</TableCell>
                       <TableCell>{seller.phone || '-'}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{seller.vehicleCount || 0}</Badge>
+                        <Badge variant="secondary">-</Badge>
                       </TableCell>
                       <TableCell>
-                        {seller.isVerified ? (
+                        {seller.verified ? (
                           <CheckCircle2 className="h-4 w-4 text-green-600" />
                         ) : (
                           <XCircle className="h-4 w-4 text-muted-foreground" />
@@ -182,7 +182,7 @@ function SellersPage() {
                             <DropdownMenuItem>Voir les détails</DropdownMenuItem>
                             <DropdownMenuItem>Modifier</DropdownMenuItem>
                             <DropdownMenuItem>
-                              {seller.isVerified ? 'Retirer la vérification' : 'Vérifier'}
+                              {seller.verified ? 'Retirer la vérification' : 'Vérifier'}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem

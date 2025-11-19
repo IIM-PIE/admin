@@ -180,7 +180,7 @@ function DocumentsPage() {
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-muted-foreground" />
-                          {document.fileName}
+                          {document.name}
                         </div>
                       </TableCell>
                       <TableCell>{getTypeLabel(document.type)}</TableCell>

@@ -18,7 +18,7 @@ const menuItems = [
     title: 'Vue d\'ensemble',
     items: [
       { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
-      { icon: BarChart3, label: 'Analytics', href: '/analytics' },
+      { icon: BarChart3, label: 'Statistiques', href: '/statistics' },
     ]
   },
   {

@@ -2,19 +2,19 @@ import { createFileRoute } from '@tanstack/react-router'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-function AnalyticsPage() {
+function StatisticsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Analytics</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Statistiques</h2>
           <p className="text-muted-foreground">
             Statistiques et analyses de la plateforme
           </p>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Tableau de bord analytique</CardTitle>
+            <CardTitle>Tableau de bord statistique</CardTitle>
             <CardDescription>Page en cours de développement</CardDescription>
           </CardHeader>
           <CardContent>
@@ -26,6 +26,6 @@ function AnalyticsPage() {
   )
 }
 
-export const Route = createFileRoute('/analytics')({
-  component: AnalyticsPage,
+export const Route = createFileRoute('/statistics')({
+  component: StatisticsPage,
 })

@@ -660,7 +660,7 @@ function UsersPage() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", { page: 1, limit: 1000 }],
     queryFn: () => usersService.getUsers({ page: 1, limit: 1000 }),
   });
 

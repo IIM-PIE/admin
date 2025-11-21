@@ -11,8 +11,8 @@ import { importsService } from '@/services/imports.service'
 
 function DashboardPage() {
   const { data: users, isLoading: loadingUsers } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => usersService.getUsers(),
+    queryKey: ['users', { page: 1, limit: 1000 }],
+    queryFn: () => usersService.getUsers({ page: 1, limit: 1000 }),
   })
 
   const { data: vehicles, isLoading: loadingVehicles } = useQuery({

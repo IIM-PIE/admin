@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VehiclesRouteImport } from './routes/vehicles'
 import { Route as UsersRouteImport } from './routes/users'
+import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as SellersRouteImport } from './routes/sellers'
 import { Route as QuotesRouteImport } from './routes/quotes'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -19,7 +20,6 @@ import { Route as ImportsRouteImport } from './routes/imports'
 import { Route as ExternalListingsRouteImport } from './routes/external-listings'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as ConversationsRouteImport } from './routes/conversations'
-import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VehiclesRoute = VehiclesRouteImport.update({
@@ -30,6 +30,11 @@ const VehiclesRoute = VehiclesRouteImport.update({
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatisticsRoute = StatisticsRouteImport.update({
+  id: '/statistics',
+  path: '/statistics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SellersRoute = SellersRouteImport.update({
@@ -72,11 +77,6 @@ const ConversationsRoute = ConversationsRouteImport.update({
   path: '/conversations',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnalyticsRoute = AnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -85,7 +85,6 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/analytics': typeof AnalyticsRoute
   '/conversations': typeof ConversationsRoute
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
@@ -94,12 +93,12 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/quotes': typeof QuotesRoute
   '/sellers': typeof SellersRoute
+  '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
   '/vehicles': typeof VehiclesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/analytics': typeof AnalyticsRoute
   '/conversations': typeof ConversationsRoute
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
@@ -108,13 +107,13 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/quotes': typeof QuotesRoute
   '/sellers': typeof SellersRoute
+  '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
   '/vehicles': typeof VehiclesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/analytics': typeof AnalyticsRoute
   '/conversations': typeof ConversationsRoute
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
@@ -123,6 +122,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/quotes': typeof QuotesRoute
   '/sellers': typeof SellersRoute
+  '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
   '/vehicles': typeof VehiclesRoute
 }
@@ -130,7 +130,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/analytics'
     | '/conversations'
     | '/documents'
     | '/external-listings'
@@ -139,12 +138,12 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/quotes'
     | '/sellers'
+    | '/statistics'
     | '/users'
     | '/vehicles'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/analytics'
     | '/conversations'
     | '/documents'
     | '/external-listings'
@@ -153,12 +152,12 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/quotes'
     | '/sellers'
+    | '/statistics'
     | '/users'
     | '/vehicles'
   id:
     | '__root__'
     | '/'
-    | '/analytics'
     | '/conversations'
     | '/documents'
     | '/external-listings'
@@ -167,13 +166,13 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/quotes'
     | '/sellers'
+    | '/statistics'
     | '/users'
     | '/vehicles'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AnalyticsRoute: typeof AnalyticsRoute
   ConversationsRoute: typeof ConversationsRoute
   DocumentsRoute: typeof DocumentsRoute
   ExternalListingsRoute: typeof ExternalListingsRoute
@@ -182,6 +181,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   QuotesRoute: typeof QuotesRoute
   SellersRoute: typeof SellersRoute
+  StatisticsRoute: typeof StatisticsRoute
   UsersRoute: typeof UsersRoute
   VehiclesRoute: typeof VehiclesRoute
 }
@@ -200,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users'
       preLoaderRoute: typeof UsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/statistics': {
+      id: '/statistics'
+      path: '/statistics'
+      fullPath: '/statistics'
+      preLoaderRoute: typeof StatisticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sellers': {
@@ -258,13 +265,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConversationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/analytics': {
-      id: '/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AnalyticsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -277,7 +277,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AnalyticsRoute: AnalyticsRoute,
   ConversationsRoute: ConversationsRoute,
   DocumentsRoute: DocumentsRoute,
   ExternalListingsRoute: ExternalListingsRoute,
@@ -286,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   QuotesRoute: QuotesRoute,
   SellersRoute: SellersRoute,
+  StatisticsRoute: StatisticsRoute,
   UsersRoute: UsersRoute,
   VehiclesRoute: VehiclesRoute,
 }

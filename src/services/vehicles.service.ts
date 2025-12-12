@@ -8,7 +8,7 @@ interface VehicleFilters extends PaginationParams {
   minYear?: number
   maxYear?: number
   transmission?: Transmission
-  status?: VehicleStatus
+  status?: VehicleStatus | 'all'
 }
 
 export const vehiclesService = {

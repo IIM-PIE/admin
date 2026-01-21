@@ -87,7 +87,7 @@ function ImportsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Véhicule</TableHead>
+                    <TableHead>Annonce</TableHead>
                     <TableHead>Progression</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Livraison estimée</TableHead>

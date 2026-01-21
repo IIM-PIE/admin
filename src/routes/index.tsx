@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Users, Car, Store } from 'lucide-react'
 import { usersService } from '@/services/users.service'
-import { vehiclesService } from '@/services/vehicles.service'
+import { listingsService } from '@/services/listings.service'
 import { sellersService } from '@/services/sellers.service'
 
 function DashboardPage() {
@@ -14,21 +14,31 @@ function DashboardPage() {
     queryFn: () => usersService.getUsers({ page: 1, limit: 1000 }),
   })
 
-  const { data: vehicles, isLoading: loadingVehicles } = useQuery({
-    queryKey: ['vehicles'],
-    queryFn: () => vehiclesService.getVehicles(),
+  const { data: listingsResponse, isLoading: loadingVehicles } = useQuery({
+    queryKey: ['listings', { page: 1, limit: 5 }],
+    queryFn: () => listingsService.getListings({ page: 1, limit: 5, status: 'all' }),
   })
+
+  const { data: listingStats, isLoading: loadingListingStats } = useQuery({
+    queryKey: ['listings', 'stats'],
+    queryFn: () => listingsService.getListingStats(),
+  })
+
+  const vehicles = listingsResponse?.data || []
+  const totalListings = listingStats?.total ?? listingsResponse?.meta?.total ?? vehicles.length
 
   const { data: sellers, isLoading: loadingSellers } = useQuery({
     queryKey: ['sellers'],
     queryFn: () => sellersService.getSellers({ page: 1, limit: 1000 }),
   })
 
-  const availableVehicles = vehicles?.filter(v => v.status === 'available').length || 0
-  const reservedVehicles = vehicles?.filter(v => v.status === 'reserved').length || 0
-  const soldVehicles = vehicles?.filter(v => v.status === 'sold').length || 0
+  const availableVehicles = listingStats?.available ?? 0
+  const reservedVehicles = listingStats?.reserved ?? 0
+  const soldVehicles = listingStats?.sold ?? 0
+  const totalListingsDisplay = loadingListingStats ? '...' : totalListings.toString()
+  const availableVehiclesDisplay = loadingListingStats ? '...' : availableVehicles.toString()
 
-  const recentVehicles = vehicles?.slice(0, 5) || []
+  const recentVehicles = vehicles || []
 
   const getVehicleStatusBadge = (status: string) => {
     const badges = {
@@ -53,9 +63,9 @@ function DashboardPage() {
       icon: Store,
     },
     {
-      title: 'Véhicules disponibles',
-      value: loadingVehicles ? '...' : availableVehicles.toString(),
-      description: `${vehicles?.length || 0} véhicules au total`,
+      title: 'Annonces disponibles',
+      value: loadingListingStats ? '...' : availableVehiclesDisplay,
+      description: `${totalListingsDisplay} annonces au total`,
       icon: Car,
     },
   ]
@@ -92,9 +102,9 @@ function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
           <Card className="col-span-4">
             <CardHeader>
-              <CardTitle>Véhicules récents</CardTitle>
+              <CardTitle>Annonces récents</CardTitle>
               <CardDescription>
-                {loadingVehicles ? 'Chargement...' : `${recentVehicles.length} véhicules récents`}
+                {loadingVehicles ? 'Chargement...' : `${recentVehicles.length} annonces récentes`}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -122,7 +132,7 @@ function DashboardPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">Aucun véhicule récent</p>
+                  <p className="text-sm text-muted-foreground">Aucune annonce récente</p>
                 </div>
               )}
             </CardContent>
@@ -147,19 +157,19 @@ function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary" />
-                  <p className="text-sm">{vehicles?.length || 0} véhicules au catalogue</p>
+                  <p className="text-sm">{vehicles?.length || 0} annonces au catalogue</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary" />
-                  <p className="text-sm">{availableVehicles} véhicules disponibles</p>
+                  <p className="text-sm">{availableVehicles} annonces disponibles</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary" />
-                  <p className="text-sm">{reservedVehicles} véhicules réservés</p>
+                  <p className="text-sm">{reservedVehicles} annonces réservées</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary" />
-                  <p className="text-sm">{soldVehicles} véhicules vendus</p>
+                  <p className="text-sm">{soldVehicles} annonces vendues</p>
                 </div>
               </div>
             </CardContent>

@@ -9,24 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VehiclesRouteImport } from './routes/vehicles'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as SellersRouteImport } from './routes/sellers'
 import { Route as QuotesRouteImport } from './routes/quotes'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as ImportsRouteImport } from './routes/imports'
 import { Route as ExternalListingsRouteImport } from './routes/external-listings'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as ConversationsRouteImport } from './routes/conversations'
 import { Route as IndexRouteImport } from './routes/index'
 
-const VehiclesRoute = VehiclesRouteImport.update({
-  id: '/vehicles',
-  path: '/vehicles',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -55,6 +50,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListingsRoute = ListingsRouteImport.update({
+  id: '/listings',
+  path: '/listings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ImportsRoute = ImportsRouteImport.update({
@@ -89,13 +89,13 @@ export interface FileRoutesByFullPath {
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
   '/imports': typeof ImportsRoute
+  '/listings': typeof ListingsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/quotes': typeof QuotesRoute
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/vehicles': typeof VehiclesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -103,13 +103,13 @@ export interface FileRoutesByTo {
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
   '/imports': typeof ImportsRoute
+  '/listings': typeof ListingsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/quotes': typeof QuotesRoute
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/vehicles': typeof VehiclesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,13 +118,13 @@ export interface FileRoutesById {
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
   '/imports': typeof ImportsRoute
+  '/listings': typeof ListingsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/quotes': typeof QuotesRoute
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/vehicles': typeof VehiclesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -134,13 +134,13 @@ export interface FileRouteTypes {
     | '/documents'
     | '/external-listings'
     | '/imports'
+    | '/listings'
     | '/login'
     | '/notifications'
     | '/quotes'
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/vehicles'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,13 +148,13 @@ export interface FileRouteTypes {
     | '/documents'
     | '/external-listings'
     | '/imports'
+    | '/listings'
     | '/login'
     | '/notifications'
     | '/quotes'
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/vehicles'
   id:
     | '__root__'
     | '/'
@@ -162,13 +162,13 @@ export interface FileRouteTypes {
     | '/documents'
     | '/external-listings'
     | '/imports'
+    | '/listings'
     | '/login'
     | '/notifications'
     | '/quotes'
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/vehicles'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -177,24 +177,17 @@ export interface RootRouteChildren {
   DocumentsRoute: typeof DocumentsRoute
   ExternalListingsRoute: typeof ExternalListingsRoute
   ImportsRoute: typeof ImportsRoute
+  ListingsRoute: typeof ListingsRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
   QuotesRoute: typeof QuotesRoute
   SellersRoute: typeof SellersRoute
   StatisticsRoute: typeof StatisticsRoute
   UsersRoute: typeof UsersRoute
-  VehiclesRoute: typeof VehiclesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/vehicles': {
-      id: '/vehicles'
-      path: '/vehicles'
-      fullPath: '/vehicles'
-      preLoaderRoute: typeof VehiclesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/users': {
       id: '/users'
       path: '/users'
@@ -235,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/listings': {
+      id: '/listings'
+      path: '/listings'
+      fullPath: '/listings'
+      preLoaderRoute: typeof ListingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/imports': {
@@ -281,13 +281,13 @@ const rootRouteChildren: RootRouteChildren = {
   DocumentsRoute: DocumentsRoute,
   ExternalListingsRoute: ExternalListingsRoute,
   ImportsRoute: ImportsRoute,
+  ListingsRoute: ListingsRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
   QuotesRoute: QuotesRoute,
   SellersRoute: SellersRoute,
   StatisticsRoute: StatisticsRoute,
   UsersRoute: UsersRoute,
-  VehiclesRoute: VehiclesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

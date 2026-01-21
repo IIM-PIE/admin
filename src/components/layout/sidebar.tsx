@@ -17,7 +17,7 @@ const menuItems = [
     title: 'Gestion',
     items: [
       { icon: Users, label: 'Utilisateurs', href: '/users' },
-      { icon: Car, label: 'Véhicules', href: '/vehicles' },
+      { icon: Car, label: 'Annonces', href: '/listings' },
       { icon: Store, label: 'Vendeurs', href: '/sellers' },
     ]
   },

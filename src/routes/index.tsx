@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,6 +7,7 @@ import { Users, Car, Store } from 'lucide-react'
 import { usersService } from '@/services/users.service'
 import { listingsService } from '@/services/listings.service'
 import { sellersService } from '@/services/sellers.service'
+import { authService } from '@/services/auth.service'
 
 function DashboardPage() {
   const { data: users, isLoading: loadingUsers } = useQuery({
@@ -181,5 +182,11 @@ function DashboardPage() {
 }
 
 export const Route = createFileRoute('/')({
+  beforeLoad: async () => {
+    const user = await authService.getCurrentUser().catch(() => null)
+    if (!user || user.role !== 'admin') {
+      throw redirect({ to: '/listings' })
+    }
+  },
   component: DashboardPage,
 })

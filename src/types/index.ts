@@ -38,6 +38,7 @@ export interface ListingFilterOptions {
 export interface Vehicle {
   id: string
   sellerId: string
+  reservedByUserId?: string
   brand: string
   model: string
   year: number
@@ -63,6 +64,7 @@ export interface Vehicle {
   createdAt: string
   updatedAt: string
   seller?: Seller
+  reservedByUser?: User
 }
 
 // Seller types

@@ -25,8 +25,9 @@ function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: authService.login,
     onSuccess: (data) => {
-      // Check if user has admin role
-      if (data.user.role !== 'admin') {
+      const allowedRoles = ['admin', 'agent']
+      // Check if user has allowed role
+      if (!allowedRoles.includes(data.user.role)) {
         // Clear tokens if user is not admin
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
@@ -35,7 +36,7 @@ function LoginPage() {
       }
       toast.success(`Bienvenue ${data.user.name}!`)
       // Force a reload of the page to refresh the auth context
-      window.location.href = '/'
+      window.location.href = data.user.role === 'agent' ? '/listings' : '/'
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.message || 'Identifiants incorrects'

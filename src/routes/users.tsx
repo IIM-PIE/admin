@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -47,6 +47,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { usersService } from "@/services/users.service";
+import { authService } from "@/services/auth.service";
 import {
   Dialog,
   DialogContent,
@@ -1009,5 +1010,11 @@ function UsersPage() {
 }
 
 export const Route = createFileRoute("/users")({
+  beforeLoad: async () => {
+    const user = await authService.getCurrentUser().catch(() => null);
+    if (!user || user.role !== "admin") {
+      throw redirect({ to: "/" });
+    }
+  },
   component: UsersPage,
 });

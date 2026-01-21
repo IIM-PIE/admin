@@ -1494,7 +1494,7 @@ function ListingsPage() {
     queryKey: ["listings", "stats"],
     queryFn: () => listingsService.getListingStats(),
   });
-  const isAdmin = user?.role === "admin";
+  const canChangeStatus = user?.role === "admin" || user?.role === "agent";
 
   const { data: filterOptions } = useQuery({
     queryKey: ["listings", "filter-options"],
@@ -2090,7 +2090,7 @@ function ListingsPage() {
                             >
                               Modifier
                             </DropdownMenuItem>
-                            {!isAdmin && (
+                            {canChangeStatus && (
                               <DropdownMenuItem
                                 onSelect={() => {
                                   setStatusVehicle(vehicle);
@@ -2186,7 +2186,7 @@ function ListingsPage() {
                               >
                                 Modifier
                               </DropdownMenuItem>
-                            {!isAdmin && (
+                            {canChangeStatus && (
                               <DropdownMenuItem
                                 onSelect={() => {
                                   setStatusVehicle(vehicle);
@@ -2555,7 +2555,6 @@ function ListingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="available">Disponible</SelectItem>
-                    <SelectItem value="reserved">Réservé</SelectItem>
                     <SelectItem value="sold">Vendu</SelectItem>
                   </SelectContent>
                 </Select>

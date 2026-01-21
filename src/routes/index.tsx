@@ -14,21 +14,31 @@ function DashboardPage() {
     queryFn: () => usersService.getUsers({ page: 1, limit: 1000 }),
   })
 
-  const { data: vehicles, isLoading: loadingVehicles } = useQuery({
-    queryKey: ['listings'],
-    queryFn: () => listingsService.getListings(),
+  const { data: listingsResponse, isLoading: loadingVehicles } = useQuery({
+    queryKey: ['listings', { page: 1, limit: 5 }],
+    queryFn: () => listingsService.getListings({ page: 1, limit: 5, status: 'all' }),
   })
+
+  const { data: listingStats, isLoading: loadingListingStats } = useQuery({
+    queryKey: ['listings', 'stats'],
+    queryFn: () => listingsService.getListingStats(),
+  })
+
+  const vehicles = listingsResponse?.data || []
+  const totalListings = listingStats?.total ?? listingsResponse?.meta?.total ?? vehicles.length
 
   const { data: sellers, isLoading: loadingSellers } = useQuery({
     queryKey: ['sellers'],
     queryFn: () => sellersService.getSellers({ page: 1, limit: 1000 }),
   })
 
-  const availableVehicles = vehicles?.filter(v => v.status === 'available').length || 0
-  const reservedVehicles = vehicles?.filter(v => v.status === 'reserved').length || 0
-  const soldVehicles = vehicles?.filter(v => v.status === 'sold').length || 0
+  const availableVehicles = listingStats?.available ?? 0
+  const reservedVehicles = listingStats?.reserved ?? 0
+  const soldVehicles = listingStats?.sold ?? 0
+  const totalListingsDisplay = loadingListingStats ? '...' : totalListings.toString()
+  const availableVehiclesDisplay = loadingListingStats ? '...' : availableVehicles.toString()
 
-  const recentVehicles = vehicles?.slice(0, 5) || []
+  const recentVehicles = vehicles || []
 
   const getVehicleStatusBadge = (status: string) => {
     const badges = {
@@ -54,8 +64,8 @@ function DashboardPage() {
     },
     {
       title: 'Annonces disponibles',
-      value: loadingVehicles ? '...' : availableVehicles.toString(),
-      description: `${vehicles?.length || 0} annonces au total`,
+      value: loadingListingStats ? '...' : availableVehiclesDisplay,
+      description: `${totalListingsDisplay} annonces au total`,
       icon: Car,
     },
   ]

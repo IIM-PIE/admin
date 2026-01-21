@@ -19,6 +19,22 @@ export type FuelType = 'essence' | 'diesel' | 'hybride' | 'electrique'
 export type Transmission = 'manuelle' | 'automatique'
 export type VehicleStatus = 'available' | 'reserved' | 'sold'
 
+export interface ListingStats {
+  total: number
+  available: number
+  reserved: number
+  sold: number
+}
+
+export interface ListingFilterOptions {
+  brands: string[]
+  locations: string[]
+  sellers: Array<{
+    id: string
+    name: string
+  }>
+}
+
 export interface Vehicle {
   id: string
   sellerId: string
@@ -31,6 +47,12 @@ export interface Vehicle {
   fuelType: FuelType
   transmission: Transmission
   power?: string
+  engineDisplacement?: number
+  engineType?: string
+  acceleration?: number
+  topSpeed?: number
+  consumption?: number
+  co2?: number
   location: string
   description?: string
   equipment: string[]

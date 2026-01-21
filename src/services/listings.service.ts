@@ -1,7 +1,19 @@
 import apiClient from '@/lib/api-client'
-import type { Vehicle, PaginationParams, VehicleStatus, FuelType, Transmission, PaginatedResponse } from '@/types'
+import type {
+  Vehicle,
+  PaginationParams,
+  VehicleStatus,
+  FuelType,
+  Transmission,
+  PaginatedResponse,
+  ListingStats,
+  ListingFilterOptions,
+} from '@/types'
 
 interface ListingFilters extends PaginationParams {
+  brand?: string
+  sellerId?: string
+  location?: string
   fuelType?: FuelType
   minPrice?: number
   maxPrice?: number
@@ -12,9 +24,9 @@ interface ListingFilters extends PaginationParams {
 }
 
 export const listingsService = {
-  getListings: async (params?: ListingFilters): Promise<Vehicle[]> => {
+  getListings: async (params?: ListingFilters): Promise<PaginatedResponse<Vehicle>> => {
     const { data } = await apiClient.get<PaginatedResponse<Vehicle>>('/listings', { params })
-    return data.data
+    return data
   },
 
   getListing: async (id: string): Promise<Vehicle> => {
@@ -34,5 +46,15 @@ export const listingsService = {
 
   deleteListing: async (id: string): Promise<void> => {
     await apiClient.delete(`/listings/${id}`)
+  },
+
+  getListingStats: async (): Promise<ListingStats> => {
+    const { data } = await apiClient.get<ListingStats>('/listings/stats')
+    return data
+  },
+
+  getListingFilterOptions: async (): Promise<ListingFilterOptions> => {
+    const { data } = await apiClient.get<ListingFilterOptions>('/listings/filters')
+    return data
   },
 }

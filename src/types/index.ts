@@ -1,5 +1,5 @@
 // User types
-export type UserRole = 'customer' | 'admin' | 'agent'
+export type UserRole = 'customer' | 'admin' | 'agent' | 'seller'
 
 export interface User {
   id: string
@@ -8,10 +8,12 @@ export interface User {
   phone?: string
   address?: string
   role: UserRole
+  sellerId?: string
   isVerified: boolean
   avatarUrl?: string
   createdAt: string
   updatedAt: string
+  seller?: Seller
 }
 
 // Vehicle types
@@ -257,6 +259,7 @@ export interface CreateUserAdminData {
   name: string
   phone: string
   role: UserRole
+  sellerId?: string
   address?: string
 }
 

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { sellersService } from '@/services/sellers.service'
+import { authService } from '@/services/auth.service'
 import type { Seller } from '@/types'
 import { useState, useEffect, useMemo } from 'react'
 import { getCountries, getCountryCallingCode } from 'react-phone-number-input/input'
@@ -1015,5 +1016,11 @@ function SellersPage() {
 }
 
 export const Route = createFileRoute('/sellers')({
+  beforeLoad: async () => {
+    const user = await authService.getCurrentUser().catch(() => null)
+    if (!user || user.role !== 'admin') {
+      throw redirect({ to: '/' })
+    }
+  },
   component: SellersPage,
 })

@@ -22,7 +22,13 @@ export function Header() {
       '/': 'Dashboard',
       '/users': 'Utilisateurs',
       '/listings': 'Annonces',
+      '/quotes': 'Réservations',
+      '/conversations': 'Conversations',
       '/sellers': 'Vendeurs',
+    }
+
+    if (pathname.startsWith('/quotes/')) {
+      return 'Réservation'
     }
 
     return routes[pathname] || 'Dashboard'

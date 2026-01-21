@@ -108,8 +108,8 @@ function QuotesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Véhicule</TableHead>
-                    <TableHead>Prix véhicule</TableHead>
+                    <TableHead>Annonce</TableHead>
+                    <TableHead>Prix annonce</TableHead>
                     <TableHead>Coût import</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Statut</TableHead>

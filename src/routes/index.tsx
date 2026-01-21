@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Users, Car, Store } from 'lucide-react'
 import { usersService } from '@/services/users.service'
-import { vehiclesService } from '@/services/vehicles.service'
+import { listingsService } from '@/services/listings.service'
 import { sellersService } from '@/services/sellers.service'
 
 function DashboardPage() {
@@ -15,8 +15,8 @@ function DashboardPage() {
   })
 
   const { data: vehicles, isLoading: loadingVehicles } = useQuery({
-    queryKey: ['vehicles'],
-    queryFn: () => vehiclesService.getVehicles(),
+    queryKey: ['listings'],
+    queryFn: () => listingsService.getListings(),
   })
 
   const { data: sellers, isLoading: loadingSellers } = useQuery({
@@ -53,9 +53,9 @@ function DashboardPage() {
       icon: Store,
     },
     {
-      title: 'Véhicules disponibles',
+      title: 'Annonces disponibles',
       value: loadingVehicles ? '...' : availableVehicles.toString(),
-      description: `${vehicles?.length || 0} véhicules au total`,
+      description: `${vehicles?.length || 0} annonces au total`,
       icon: Car,
     },
   ]
@@ -92,9 +92,9 @@ function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
           <Card className="col-span-4">
             <CardHeader>
-              <CardTitle>Véhicules récents</CardTitle>
+              <CardTitle>Annonces récents</CardTitle>
               <CardDescription>
-                {loadingVehicles ? 'Chargement...' : `${recentVehicles.length} véhicules récents`}
+                {loadingVehicles ? 'Chargement...' : `${recentVehicles.length} annonces récentes`}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -122,7 +122,7 @@ function DashboardPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">Aucun véhicule récent</p>
+                  <p className="text-sm text-muted-foreground">Aucune annonce récente</p>
                 </div>
               )}
             </CardContent>
@@ -147,19 +147,19 @@ function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary" />
-                  <p className="text-sm">{vehicles?.length || 0} véhicules au catalogue</p>
+                  <p className="text-sm">{vehicles?.length || 0} annonces au catalogue</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary" />
-                  <p className="text-sm">{availableVehicles} véhicules disponibles</p>
+                  <p className="text-sm">{availableVehicles} annonces disponibles</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary" />
-                  <p className="text-sm">{reservedVehicles} véhicules réservés</p>
+                  <p className="text-sm">{reservedVehicles} annonces réservées</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-primary" />
-                  <p className="text-sm">{soldVehicles} véhicules vendus</p>
+                  <p className="text-sm">{soldVehicles} annonces vendues</p>
                 </div>
               </div>
             </CardContent>

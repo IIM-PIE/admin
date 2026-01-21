@@ -21,9 +21,8 @@ export function Header() {
     const routes: Record<string, string> = {
       '/': 'Dashboard',
       '/users': 'Utilisateurs',
-      '/vehicles': 'Véhicules',
+      '/listings': 'Annonces',
       '/sellers': 'Vendeurs',
-      '/statistics': 'Statistiques',
     }
 
     return routes[pathname] || 'Dashboard'

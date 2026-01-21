@@ -46,7 +46,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { vehiclesService } from "@/services/vehicles.service";
+import { listingsService } from "@/services/listings.service";
 import { sellersService } from "@/services/sellers.service";
 import type { FuelType, Transmission, VehicleStatus, Vehicle } from "@/types";
 import { useEffect, useState } from "react";
@@ -67,8 +67,8 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-// Composant formulaire d'ajout de véhicule
-function AddVehicleForm({ onClose }: { onClose: () => void }) {
+// Composant formulaire d'ajout d'annonce
+function AddAnnonceForm({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
   const [equipment, setEquipment] = useState<string[]>([]);
   const [currentEquipment, setCurrentEquipment] = useState("");
@@ -102,10 +102,10 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
   });
 
   const createMutation = useMutation({
-    mutationFn: vehiclesService.createVehicle,
+    mutationFn: listingsService.createListing,
     onSuccess: () => {
-      toast.success("Véhicule créé avec succès");
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success("Annonce créée avec succès");
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
       onClose();
     },
     onError: (error: any) => {
@@ -482,7 +482,7 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
         <Label htmlFor="description">Description</Label>
         <Textarea
           id="description"
-          placeholder="Description détaillée du véhicule..."
+          placeholder="Description détaillée de l'annonce..."
           value={formData.description}
           onChange={(e) =>
             setFormData({ ...formData, description: e.target.value })
@@ -589,15 +589,15 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
           type="submit"
           disabled={!isFormValid || createMutation.isPending}
         >
-          {createMutation.isPending ? "Création..." : "Créer le véhicule"}
+          {createMutation.isPending ? "Création..." : "Créer l'annonce"}
         </Button>
       </div>
     </form>
   );
 }
 
-// Composant formulaire d'édition de véhicule
-function EditVehicleForm({
+// Composant formulaire d'édition d'annonce
+function EditAnnonceForm({
   vehicle,
   onClose,
 }: {
@@ -665,10 +665,10 @@ function EditVehicleForm({
 
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<Vehicle>) =>
-      vehiclesService.updateVehicle(vehicle.id, payload),
+      listingsService.updateListing(vehicle.id, payload),
     onSuccess: () => {
-      toast.success("Véhicule mis à jour avec succès");
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success("Annonce mise à jour avec succès");
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
       onClose();
     },
     onError: (error: any) => {
@@ -1042,7 +1042,7 @@ function EditVehicleForm({
         <Label htmlFor="description_edit">Description</Label>
         <Textarea
           id="description_edit"
-          placeholder="Description détaillée du véhicule..."
+          placeholder="Description détaillée de l'annonce..."
           value={formData.description}
           onChange={(e) =>
             setFormData({ ...formData, description: e.target.value })
@@ -1158,7 +1158,7 @@ function EditVehicleForm({
   );
 }
 
-function VehiclesPage() {
+function ListingsPage() {
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
@@ -1182,9 +1182,9 @@ function VehiclesPage() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["vehicles", debouncedSearch],
+    queryKey: ["listings", debouncedSearch],
     queryFn: () =>
-      vehiclesService.getVehicles({
+      listingsService.getListings({
         status: "all",
         page: 1,
         limit: 1000,
@@ -1193,10 +1193,10 @@ function VehiclesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: vehiclesService.deleteVehicle,
+    mutationFn: listingsService.deleteListing,
     onSuccess: () => {
-      toast.success("Véhicule supprimé avec succès");
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success("Annonce supprimé avec succès");
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
       setDeleteVehicle(null);
     },
     onError: (error: any) => {
@@ -1214,10 +1214,10 @@ function VehiclesPage() {
 
   const statusMutation = useMutation({
     mutationFn: (payload: { id: string; status: VehicleStatus }) =>
-      vehiclesService.updateVehicle(payload.id, { status: payload.status }),
+      listingsService.updateListing(payload.id, { status: payload.status }),
     onSuccess: () => {
       toast.success("Statut mis à jour");
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
       setStatusVehicle(null);
     },
     onError: (error: any) => {
@@ -1234,7 +1234,7 @@ function VehiclesPage() {
         <div className="flex items-center justify-center h-[50vh]">
           <div className="text-center">
             <p className="text-destructive mb-2">
-              Erreur lors du chargement des véhicules
+              Erreur lors du chargement des annonces
             </p>
             <p className="text-sm text-muted-foreground">
               {(error as any).response?.data?.message ||
@@ -1256,7 +1256,7 @@ function VehiclesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{vehicles?.length || 0}</div>
-              <p className="text-xs text-muted-foreground">véhicules</p>
+              <p className="text-xs text-muted-foreground">annonces</p>
             </CardContent>
           </Card>
           <Card>
@@ -1291,31 +1291,33 @@ function VehiclesPage() {
         <Card>
           <CardHeader className="flex flex-row items-start justify-between space-y-0">
             <div className="flex flex-col gap-2">
-              <CardTitle>Catalogue de véhicules</CardTitle>
+              <CardTitle>Catalogue d'annonces</CardTitle>
               <CardDescription>
                 {isLoading
                   ? "Chargement..."
-                  : `${vehicles?.length || 0} véhicules au total`}
+                  : `${vehicles?.length || 0} annonces au total`}
               </CardDescription>
             </div>
 
+            {/*
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Ajouter un véhicule
+                  Ajouter une annonce
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
-                  <DialogTitle>Ajouter un véhicule</DialogTitle>
+                  <DialogTitle>Ajouter une annonce</DialogTitle>
                   <DialogDescription>
-                    Ajoutez un nouveau véhicule au catalogue.
+                    Ajoutez une nouvelle annonce au catalogue.
                   </DialogDescription>
                 </DialogHeader>
-                <AddVehicleForm onClose={() => setIsAddDialogOpen(false)} />
+                <AddAnnonceForm onClose={() => setIsAddDialogOpen(false)} />
               </DialogContent>
             </Dialog>
+            */}
           </CardHeader>
 
           <CardContent>
@@ -1336,7 +1338,7 @@ function VehiclesPage() {
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                   <p className="text-sm text-muted-foreground">
-                    Chargement des véhicules...
+                    Chargement des annonces...
                   </p>
                 </div>
               </div>
@@ -1344,7 +1346,7 @@ function VehiclesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Véhicule</TableHead>
+                    <TableHead>Annonce</TableHead>
                     <TableHead>Année</TableHead>
                     <TableHead>Prix</TableHead>
                     <TableHead>Coût import</TableHead>
@@ -1418,9 +1420,9 @@ function VehiclesPage() {
               </Table>
             ) : (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">Aucun véhicule trouvé</p>
+                <p className="text-muted-foreground">Aucune annonce trouvée</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Ajoutez votre premier véhicule au catalogue
+                  Ajoutez votre première annonce au catalogue
                 </p>
               </div>
             )}
@@ -1450,7 +1452,7 @@ function VehiclesPage() {
                 </span>
               </DialogTitle>
               <DialogDescription>
-                Détails complets du véhicule sélectionné.
+                Détails complets de l'annonce sélectionnée.
               </DialogDescription>
             </DialogHeader>
 
@@ -1656,13 +1658,13 @@ function VehiclesPage() {
         {editingVehicle && (
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>Modifier le véhicule</DialogTitle>
+              <DialogTitle>Modifier l'annonce</DialogTitle>
               <DialogDescription>
                 Mettez à jour les informations de {editingVehicle.brand}{" "}
                 {editingVehicle.model}.
               </DialogDescription>
             </DialogHeader>
-            <EditVehicleForm
+            <EditAnnonceForm
               vehicle={editingVehicle}
               onClose={() => setEditingVehicle(null)}
             />
@@ -1745,7 +1747,7 @@ function VehiclesPage() {
         {deleteVehicle && (
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Supprimer le véhicule</DialogTitle>
+              <DialogTitle>Supprimer l'annonce</DialogTitle>
               <DialogDescription>
                 Cette action est irréversible. Confirmez la suppression de{" "}
                 <span className="font-semibold">
@@ -1801,6 +1803,6 @@ function VehiclesPage() {
   );
 }
 
-export const Route = createFileRoute("/vehicles")({
-  component: VehiclesPage,
+export const Route = createFileRoute("/listings")({
+  component: ListingsPage,
 });

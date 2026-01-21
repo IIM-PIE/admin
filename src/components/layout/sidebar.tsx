@@ -13,7 +13,7 @@ export function Sidebar() {
   const { user } = useAuth()
   const role = user?.role
   const isAdmin = role === 'admin'
-  const isAgent = role === 'agent'
+  const isAgent = role === 'agent' || isAdmin
 
   const menuItems = [
     {

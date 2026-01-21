@@ -1,10 +1,10 @@
 import apiClient from '@/lib/api-client'
-import type { Seller, PaginationParams } from '@/types'
+import type { Seller, PaginationParams, PaginatedResponse } from '@/types'
 
 export const sellersService = {
   getSellers: async (params?: PaginationParams): Promise<Seller[]> => {
-    const { data } = await apiClient.get<Seller[]>('/sellers', { params })
-    return data
+    const { data } = await apiClient.get<PaginatedResponse<Seller>>('/sellers', { params })
+    return data.data
   },
 
   getSeller: async (id: string): Promise<Seller> => {

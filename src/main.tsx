@@ -16,9 +16,11 @@ const router = createRouter({ routeTree })
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 0, // Les données sont considérées comme obsolètes immédiatement
+      cacheTime: 1000 * 60 * 5, // Mais gardées en cache 5 minutes pour un accès rapide
       retry: 1,
       refetchOnWindowFocus: false,
+      refetchOnMount: true, // Re-fetch quand le composant est monté
     },
   },
 })

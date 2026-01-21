@@ -10,9 +10,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useRouterState } from '@tanstack/react-router'
 
 export function Header() {
   const { user, logout } = useAuth()
+  const routerState = useRouterState()
+
+  // Mapper les routes vers leurs titres
+  const getPageTitle = (pathname: string): string => {
+    const routes: Record<string, string> = {
+      '/': 'Dashboard',
+      '/users': 'Utilisateurs',
+      '/vehicles': 'Véhicules',
+      '/quotes': 'Devis',
+      '/imports': 'Importations',
+      '/external-listings': 'Annonces Externes',
+      '/sellers': 'Vendeurs',
+      '/documents': 'Documents',
+      '/conversations': 'Conversations',
+      '/notifications': 'Notifications',
+      '/statistics': 'Statistiques',
+    }
+
+    return routes[pathname] || 'Dashboard'
+  }
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -28,7 +49,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
       <div className="flex-1">
-        <h1 className="text-xl font-semibold">Dashboard</h1>
+        <h1 className="text-xl font-semibold">{getPageTitle(routerState.location.pathname)}</h1>
       </div>
 
       <div className="flex items-center gap-2">

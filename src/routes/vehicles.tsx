@@ -51,6 +51,9 @@ import { sellersService } from "@/services/sellers.service";
 import type { FuelType, Transmission, VehicleStatus, Vehicle } from "@/types";
 import { useEffect, useState } from "react";
 
+const MAX_IMAGES = 4;
+const sanitizeNumberInput = (value: string) => value.replace(/\D/g, "");
+
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "available":
@@ -140,6 +143,10 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
   };
 
   const addImage = () => {
+    if (images.length >= MAX_IMAGES) {
+      toast.error(`Maximum ${MAX_IMAGES} images`);
+      return;
+    }
     if (currentImage.trim()) {
       setImages([...images, currentImage.trim()]);
       setCurrentImage("");
@@ -213,9 +220,15 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
             min="1900"
             max={new Date().getFullYear() + 1}
             value={formData.year}
-            onChange={(e) =>
-              setFormData({ ...formData, year: parseInt(e.target.value) })
-            }
+            inputMode="numeric"
+            pattern="[0-9]*"
+            onChange={(e) => {
+              const sanitized = sanitizeNumberInput(e.target.value);
+              setFormData({
+                ...formData,
+                year: sanitized ? parseInt(sanitized, 10) : 0,
+              });
+            }}
             disabled={createMutation.isPending}
             required
           />
@@ -231,9 +244,15 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
             type="number"
             min="0"
             value={formData.mileage}
-            onChange={(e) =>
-              setFormData({ ...formData, mileage: parseInt(e.target.value) })
-            }
+            inputMode="numeric"
+            pattern="[0-9]*"
+            onChange={(e) => {
+              const sanitized = sanitizeNumberInput(e.target.value);
+              setFormData({
+                ...formData,
+                mileage: sanitized ? parseInt(sanitized, 10) : 0,
+              });
+            }}
             disabled={createMutation.isPending}
             required
           />
@@ -252,9 +271,15 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
             min="0"
             step="100"
             value={formData.price}
-            onChange={(e) =>
-              setFormData({ ...formData, price: parseFloat(e.target.value) })
-            }
+            inputMode="numeric"
+            pattern="[0-9]*"
+            onChange={(e) => {
+              const sanitized = sanitizeNumberInput(e.target.value);
+              setFormData({
+                ...formData,
+                price: sanitized ? parseInt(sanitized, 10) : 0,
+              });
+            }}
             disabled={createMutation.isPending}
             required
           />
@@ -271,12 +296,15 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
             min="0"
             step="100"
             value={formData.importCost}
-            onChange={(e) =>
+            inputMode="numeric"
+            pattern="[0-9]*"
+            onChange={(e) => {
+              const sanitized = sanitizeNumberInput(e.target.value);
               setFormData({
                 ...formData,
-                importCost: parseFloat(e.target.value),
-              })
-            }
+                importCost: sanitized ? parseInt(sanitized, 10) : 0,
+              });
+            }}
             disabled={createMutation.isPending}
             required
           />
@@ -339,9 +367,12 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
             id="power"
             placeholder="150 CV"
             value={formData.power}
-            onChange={(e) =>
-              setFormData({ ...formData, power: e.target.value })
-            }
+            inputMode="numeric"
+            pattern="[0-9]*"
+            onChange={(e) => {
+              const sanitized = sanitizeNumberInput(e.target.value);
+              setFormData({ ...formData, power: sanitized });
+            }}
             disabled={createMutation.isPending}
           />
         </div>
@@ -501,7 +532,7 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
 
       {/* Images */}
       <div className="space-y-2">
-        <Label htmlFor="images">Images (URLs)</Label>
+        <Label htmlFor="images">Images (URLs) (max {MAX_IMAGES})</Label>
         <div className="flex gap-2">
           <Input
             id="images"
@@ -511,13 +542,17 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
             onKeyPress={(e) =>
               e.key === "Enter" && (e.preventDefault(), addImage())
             }
-            disabled={createMutation.isPending}
+            disabled={createMutation.isPending || images.length >= MAX_IMAGES}
           />
           <Button
             type="button"
             variant="outline"
             onClick={addImage}
-            disabled={createMutation.isPending || !currentImage.trim()}
+            disabled={
+              createMutation.isPending ||
+              !currentImage.trim() ||
+              images.length >= MAX_IMAGES
+            }
           >
             Ajouter
           </Button>
@@ -671,6 +706,10 @@ function EditVehicleForm({
   };
 
   const addImage = () => {
+    if (images.length >= MAX_IMAGES) {
+      toast.error(`Maximum ${MAX_IMAGES} images`);
+      return;
+    }
     if (currentImage.trim()) {
       setImages([...images, currentImage.trim()]);
       setCurrentImage("");
@@ -744,9 +783,15 @@ function EditVehicleForm({
             min="1900"
             max={new Date().getFullYear() + 1}
             value={formData.year}
-            onChange={(e) =>
-              setFormData({ ...formData, year: parseInt(e.target.value) })
-            }
+            inputMode="numeric"
+            pattern="[0-9]*"
+            onChange={(e) => {
+              const sanitized = sanitizeNumberInput(e.target.value);
+              setFormData({
+                ...formData,
+                year: sanitized ? parseInt(sanitized, 10) : 0,
+              });
+            }}
             disabled={updateMutation.isPending}
             required
           />
@@ -762,12 +807,15 @@ function EditVehicleForm({
             type="number"
             min="0"
             value={formData.mileage}
-            onChange={(e) =>
+            inputMode="numeric"
+            pattern="[0-9]*"
+            onChange={(e) => {
+              const sanitized = sanitizeNumberInput(e.target.value);
               setFormData({
                 ...formData,
-                mileage: parseInt(e.target.value),
-              })
-            }
+                mileage: sanitized ? parseInt(sanitized, 10) : 0,
+              });
+            }}
             disabled={updateMutation.isPending}
             required
           />
@@ -786,12 +834,15 @@ function EditVehicleForm({
             min="0"
             step="100"
             value={formData.price}
-            onChange={(e) =>
+            inputMode="numeric"
+            pattern="[0-9]*"
+            onChange={(e) => {
+              const sanitized = sanitizeNumberInput(e.target.value);
               setFormData({
                 ...formData,
-                price: parseInt(e.target.value),
-              })
-            }
+                price: sanitized ? parseInt(sanitized, 10) : 0,
+              });
+            }}
             disabled={updateMutation.isPending}
             required
           />
@@ -806,12 +857,15 @@ function EditVehicleForm({
             min="0"
             step="100"
             value={formData.importCost}
-            onChange={(e) =>
+            inputMode="numeric"
+            pattern="[0-9]*"
+            onChange={(e) => {
+              const sanitized = sanitizeNumberInput(e.target.value);
               setFormData({
                 ...formData,
-                importCost: parseInt(e.target.value),
-              })
-            }
+                importCost: sanitized ? parseInt(sanitized, 10) : 0,
+              });
+            }}
             disabled={updateMutation.isPending}
           />
         </div>
@@ -873,9 +927,12 @@ function EditVehicleForm({
             id="power_edit"
             placeholder="150 CV"
             value={formData.power}
-            onChange={(e) =>
-              setFormData({ ...formData, power: e.target.value })
-            }
+            inputMode="numeric"
+            pattern="[0-9]*"
+            onChange={(e) => {
+              const sanitized = sanitizeNumberInput(e.target.value);
+              setFormData({ ...formData, power: sanitized });
+            }}
             disabled={updateMutation.isPending}
           />
         </div>
@@ -1035,7 +1092,7 @@ function EditVehicleForm({
 
       {/* Images */}
       <div className="space-y-2">
-        <Label htmlFor="images_edit">Images (URLs)</Label>
+        <Label htmlFor="images_edit">Images (URLs) (max {MAX_IMAGES})</Label>
         <div className="flex gap-2">
           <Input
             id="images_edit"
@@ -1045,13 +1102,17 @@ function EditVehicleForm({
             onKeyPress={(e) =>
               e.key === "Enter" && (e.preventDefault(), addImage())
             }
-            disabled={updateMutation.isPending}
+            disabled={updateMutation.isPending || images.length >= MAX_IMAGES}
           />
           <Button
             type="button"
             variant="outline"
             onClick={addImage}
-            disabled={updateMutation.isPending || !currentImage.trim()}
+            disabled={
+              updateMutation.isPending ||
+              !currentImage.trim() ||
+              images.length >= MAX_IMAGES
+            }
           >
             Ajouter
           </Button>
@@ -1101,6 +1162,7 @@ function VehiclesPage() {
   const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [statusVehicle, setStatusVehicle] = useState<Vehicle | null>(null);
   const [newStatus, setNewStatus] = useState<VehicleStatus>("available");
@@ -1371,6 +1433,7 @@ function VehiclesPage() {
         onOpenChange={(open) => {
           if (!open) {
             setSelectedVehicle(null);
+            setSelectedImageIndex(0);
           }
         }}
       >
@@ -1397,7 +1460,14 @@ function VehiclesPage() {
                   {selectedVehicle.images &&
                   selectedVehicle.images.length > 0 ? (
                     <img
-                      src={selectedVehicle.images[0]}
+                      src={
+                        selectedVehicle.images[
+                          Math.min(
+                            selectedImageIndex,
+                            selectedVehicle.images.length - 1
+                          )
+                        ]
+                      }
                       alt={`${selectedVehicle.brand} ${selectedVehicle.model}`}
                       className="h-64 w-full object-cover"
                     />
@@ -1410,18 +1480,25 @@ function VehiclesPage() {
 
                 {selectedVehicle.images &&
                   selectedVehicle.images.length > 1 && (
-                    <div className="grid grid-cols-3 gap-2">
-                      {selectedVehicle.images.slice(1, 4).map((url, index) => (
-                        <div
+                    <div className="grid grid-cols-4 gap-2">
+                      {selectedVehicle.images.map((url, index) => (
+                        <button
                           key={url}
-                          className="overflow-hidden rounded-md border bg-muted/50"
+                          type="button"
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={`overflow-hidden rounded-md border bg-muted/50 transition ${
+                            index === selectedImageIndex
+                              ? "ring-2 ring-primary"
+                              : "hover:ring-2 hover:ring-primary/50"
+                          }`}
+                          aria-label={`Voir image ${index + 1}`}
                         >
                           <img
                             src={url}
-                            alt={`Aperçu ${index + 2}`}
-                            className="h-24 w-full object-cover"
+                            alt={`Aperçu ${index + 1}`}
+                            className="h-20 w-full object-cover"
                           />
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}

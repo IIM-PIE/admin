@@ -559,7 +559,7 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
         </div>
         {images.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
-            {images.map((url, index) => (
+            {images.map((_, index) => (
               <Badge
                 key={index}
                 variant="secondary"
@@ -1119,7 +1119,7 @@ function EditVehicleForm({
         </div>
         {images.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
-            {images.map((url, index) => (
+            {images.map((_, index) => (
               <Badge
                 key={index}
                 variant="secondary"

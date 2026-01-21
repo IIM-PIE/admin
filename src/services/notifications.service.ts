@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client'
-import type { Notification, PaginationParams } from '@/types'
+import type { Notification, PaginatedResponse, PaginationParams } from '@/types'
 
 interface NotificationFilters extends PaginationParams {
   userId?: string
@@ -8,8 +8,14 @@ interface NotificationFilters extends PaginationParams {
 
 export const notificationsService = {
   getNotifications: async (params?: NotificationFilters): Promise<Notification[]> => {
-    const { data } = await apiClient.get<Notification[]>('/notifications', { params })
-    return data
+    const { data } = await apiClient.get<Notification[] | PaginatedResponse<Notification>>(
+      '/notifications',
+      { params }
+    )
+    const payload: any = (data as any)?.data ?? data
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload?.data)) return payload.data
+    return []
   },
 
   getNotification: async (id: string): Promise<Notification> => {

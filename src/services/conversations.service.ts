@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client'
-import type { Conversation, Message, PaginationParams } from '@/types'
+import type { Conversation, Message, PaginatedResponse, PaginationParams } from '@/types'
 
 interface ConversationFilters extends PaginationParams {
   userId?: string
@@ -8,8 +8,14 @@ interface ConversationFilters extends PaginationParams {
 
 export const conversationsService = {
   getConversations: async (params?: ConversationFilters): Promise<Conversation[]> => {
-    const { data } = await apiClient.get<Conversation[]>('/conversations', { params })
-    return data
+    const { data } = await apiClient.get<Conversation[] | PaginatedResponse<Conversation>>(
+      '/conversations',
+      { params }
+    )
+    const payload: any = (data as any)?.data ?? data
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload?.data)) return payload.data
+    return []
   },
 
   getConversation: async (id: string): Promise<Conversation> => {
@@ -38,10 +44,13 @@ export const conversationsService = {
 
   // Messages
   getMessages: async (conversationId: string): Promise<Message[]> => {
-    const { data } = await apiClient.get<Message[]>('/messages', {
+    const { data } = await apiClient.get<Message[] | PaginatedResponse<Message>>('/messages', {
       params: { conversationId },
     })
-    return data
+    const payload: any = (data as any)?.data ?? data
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload?.data)) return payload.data
+    return []
   },
 
   sendMessage: async (message: Partial<Message>): Promise<Message> => {

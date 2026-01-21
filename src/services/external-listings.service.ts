@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client'
-import type { ExternalListing, PaginationParams } from '@/types'
+import type { ExternalListing, PaginatedResponse, PaginationParams } from '@/types'
 
 interface ExternalListingFilters extends PaginationParams {
   userId?: string
@@ -8,8 +8,14 @@ interface ExternalListingFilters extends PaginationParams {
 
 export const externalListingsService = {
   getExternalListings: async (params?: ExternalListingFilters): Promise<ExternalListing[]> => {
-    const { data } = await apiClient.get<ExternalListing[]>('/external-listings', { params })
-    return data
+    const { data } = await apiClient.get<ExternalListing[] | PaginatedResponse<ExternalListing>>(
+      '/external-listings',
+      { params }
+    )
+    const payload: any = (data as any)?.data ?? data
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload?.data)) return payload.data
+    return []
   },
 
   getExternalListing: async (id: string): Promise<ExternalListing> => {

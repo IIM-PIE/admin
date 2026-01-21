@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client'
-import type { Document, PaginationParams } from '@/types'
+import type { Document, PaginatedResponse, PaginationParams } from '@/types'
 
 interface DocumentFilters extends PaginationParams {
   importId?: string
@@ -9,8 +9,13 @@ interface DocumentFilters extends PaginationParams {
 
 export const documentsService = {
   getDocuments: async (params?: DocumentFilters): Promise<Document[]> => {
-    const { data } = await apiClient.get<Document[]>('/documents', { params })
-    return data
+    const { data } = await apiClient.get<Document[] | PaginatedResponse<Document>>('/documents', {
+      params,
+    })
+    const payload: any = (data as any)?.data ?? data
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload?.data)) return payload.data
+    return []
   },
 
   getDocument: async (id: string): Promise<Document> => {

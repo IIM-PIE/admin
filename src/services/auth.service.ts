@@ -24,7 +24,10 @@ export const authService = {
 
   logout: async (): Promise<void> => {
     try {
-      await apiClient.post('/auth/logout')
+      const refreshToken = localStorage.getItem('refresh_token')
+      if (refreshToken) {
+        await apiClient.post('/auth/logout', { refreshToken })
+      }
     } finally {
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
@@ -39,7 +42,7 @@ export const authService = {
   refreshToken: async (): Promise<AuthResponse> => {
     const refreshToken = localStorage.getItem('refresh_token')
     const { data } = await apiClient.post<AuthResponse>('/auth/refresh', {
-      refresh_token: refreshToken,
+      refreshToken,
     })
     localStorage.setItem('access_token', data.access_token)
     localStorage.setItem('refresh_token', data.refresh_token)

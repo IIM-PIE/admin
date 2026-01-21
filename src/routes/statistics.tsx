@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -27,5 +27,8 @@ function StatisticsPage() {
 }
 
 export const Route = createFileRoute('/statistics')({
+  beforeLoad: () => {
+    throw redirect({ to: '/' })
+  },
   component: StatisticsPage,
 })

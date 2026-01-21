@@ -4,13 +4,6 @@ import {
   Users,
   Car,
   Store,
-  FileText,
-  Package,
-  MessageSquare,
-  Bell,
-  BarChart3,
-  ClipboardList,
-  FolderOpen
 } from 'lucide-react'
 
 const menuItems = [
@@ -18,7 +11,6 @@ const menuItems = [
     title: 'Vue d\'ensemble',
     items: [
       { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
-      { icon: BarChart3, label: 'Statistiques', href: '/statistics' },
     ]
   },
   {
@@ -27,22 +19,6 @@ const menuItems = [
       { icon: Users, label: 'Utilisateurs', href: '/users' },
       { icon: Car, label: 'Véhicules', href: '/vehicles' },
       { icon: Store, label: 'Vendeurs', href: '/sellers' },
-      { icon: FileText, label: 'Devis', href: '/quotes' },
-      { icon: Package, label: 'Importations', href: '/imports' },
-      { icon: ClipboardList, label: 'Listings externes', href: '/external-listings' },
-    ]
-  },
-  {
-    title: 'Communication',
-    items: [
-      { icon: MessageSquare, label: 'Conversations', href: '/conversations' },
-      { icon: Bell, label: 'Notifications', href: '/notifications' },
-    ]
-  },
-  {
-    title: 'Documents',
-    items: [
-      { icon: FolderOpen, label: 'Documents', href: '/documents' },
     ]
   },
 ]

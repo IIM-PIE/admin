@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -141,5 +141,8 @@ function ImportsPage() {
 }
 
 export const Route = createFileRoute('/imports')({
+  beforeLoad: () => {
+    throw redirect({ to: '/' })
+  },
   component: ImportsPage,
 })

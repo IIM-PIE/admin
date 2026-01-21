@@ -65,7 +65,7 @@ function DashboardPage() {
     },
     {
       title: 'Annonces disponibles',
-      value: loadingListingStats ? '...' : availableVehiclesDisplay,
+      value: availableVehiclesDisplay,
       description: `${totalListingsDisplay} annonces au total`,
       icon: Car,
     },

@@ -24,6 +24,7 @@ export function Header() {
       '/listings': 'Annonces',
       '/quotes': 'Réservations',
       '/conversations': 'Conversations',
+      '/statistics': 'Statistiques',
       '/sellers': 'Vendeurs',
     }
 

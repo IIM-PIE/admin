@@ -24,6 +24,7 @@ export interface ListingStats {
   available: number
   reserved: number
   sold: number
+  importRevenue?: number
 }
 
 export interface ListingFilterOptions {
@@ -39,6 +40,7 @@ export interface Vehicle {
   id: string
   sellerId: string
   reservedByUserId?: string
+  reservedAt?: string
   brand: string
   model: string
   year: number

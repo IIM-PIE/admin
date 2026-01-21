@@ -7,18 +7,22 @@ import {
   Store,
   MessageSquare,
   ClipboardList,
+  BarChart3,
 } from 'lucide-react'
 
 export function Sidebar() {
   const { user } = useAuth()
   const role = user?.role
   const isAdmin = role === 'admin'
-  const isAgent = role === 'agent'
+  const isAgent = role === 'agent' || isAdmin
 
   const menuItems = [
     {
       title: 'Vue d\'ensemble',
-      items: isAdmin ? [{ icon: LayoutDashboard, label: 'Dashboard', href: '/' }] : [],
+      items: [
+        ...(isAdmin ? [{ icon: LayoutDashboard, label: 'Dashboard', href: '/' }] : []),
+        ...(isAdmin ? [{ icon: BarChart3, label: 'Statistiques', href: '/statistics' }] : []),
+      ],
     },
     {
       title: 'Gestion',

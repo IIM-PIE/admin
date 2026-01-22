@@ -105,7 +105,7 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
     model: "",
     year: String(new Date().getFullYear()),
     price: "",
-    importCost: "",
+    importCost: "1200",
     mileage: "",
     fuelType: "essence" as FuelType,
     transmission: "manuelle" as Transmission,

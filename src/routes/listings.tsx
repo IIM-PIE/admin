@@ -163,28 +163,6 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
       toast.error("Veuillez sélectionner le client ayant réservé l'annonce");
       return;
     }
-    if (formData.status === "reserved" && !formData.reservedByUserId) {
-      toast.error("Veuillez sélectionner le client ayant réservé l'annonce");
-      return;
-    }
-    if (formData.status === "reserved" && !formData.reservedByUserId) {
-      toast.error("Veuillez sélectionner le client ayant réservé l'annonce");
-      return;
-    }
-
-    const yearValue = parseRequiredInt(formData.year);
-    const priceValue = parseRequiredFloat(formData.price);
-    const importCostValue = parseOptionalFloat(formData.importCost);
-    const mileageValue = parseRequiredFloat(formData.mileage);
-
-    if (
-      yearValue === undefined ||
-      priceValue === undefined ||
-      mileageValue === undefined
-    ) {
-      toast.error("Veuillez renseigner des valeurs numériques valides");
-      return;
-    }
 
     const yearValue = parseRequiredInt(formData.year);
     const priceValue = parseRequiredFloat(formData.price);

@@ -53,7 +53,6 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquare,
-  Send,
   Plus,
   ExternalLink,
 } from "lucide-react";

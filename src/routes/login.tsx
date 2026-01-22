@@ -58,7 +58,7 @@ function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
       <Card className="w-[400px]">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">AutoImport Italia</CardTitle>
+          <CardTitle className="text-2xl font-bold">Strada Import</CardTitle>
           <CardDescription>
             Dashboard
           </CardDescription>

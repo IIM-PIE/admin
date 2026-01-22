@@ -35,6 +35,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Sheet,
@@ -53,6 +54,7 @@ import {
   ChevronRight,
   MessageSquare,
   Send,
+  Plus,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -99,10 +101,10 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
     sellerId: "",
     brand: "",
     model: "",
-    year: new Date().getFullYear(),
-    price: 0,
-    importCost: 0,
-    mileage: 0,
+    year: String(new Date().getFullYear()),
+    price: "",
+    importCost: "",
+    mileage: "",
     fuelType: "essence" as FuelType,
     transmission: "manuelle" as Transmission,
     power: "",
@@ -148,8 +150,26 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
       return;
     }
 
+    const yearValue = parseRequiredInt(formData.year);
+    const priceValue = parseRequiredFloat(formData.price);
+    const importCostValue = parseOptionalFloat(formData.importCost);
+    const mileageValue = parseRequiredFloat(formData.mileage);
+
+    if (
+      yearValue === undefined ||
+      priceValue === undefined ||
+      mileageValue === undefined
+    ) {
+      toast.error("Veuillez renseigner des valeurs numériques valides");
+      return;
+    }
+
     const vehicleData = {
       ...formData,
+      year: yearValue,
+      price: priceValue,
+      importCost: importCostValue,
+      mileage: mileageValue,
       equipment,
       images,
       engineDisplacement: parseOptionalInt(formData.engineDisplacement),
@@ -192,15 +212,30 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
     value ? parseInt(value, 10) : undefined;
   const parseOptionalFloat = (value: string) =>
     value ? Number(value) : undefined;
+  const parseRequiredInt = (value: string) => {
+    const parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  };
+  const parseRequiredFloat = (value: string) => {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  };
+
+  const yearValue = parseRequiredInt(formData.year);
+  const priceValue = parseRequiredFloat(formData.price);
+  const mileageValue = parseRequiredFloat(formData.mileage);
 
   const isFormValid =
     formData.brand.trim() !== "" &&
     formData.model.trim() !== "" &&
     formData.sellerId !== "" &&
     formData.location.trim() !== "" &&
-    formData.year > 1900 &&
-    formData.price > 0 &&
-    formData.mileage >= 0;
+    yearValue !== undefined &&
+    yearValue > 1900 &&
+    priceValue !== undefined &&
+    priceValue > 0 &&
+    mileageValue !== undefined &&
+    mileageValue >= 0;
 
   return (
     <form
@@ -252,17 +287,16 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
           </Label>
           <Input
             id="year"
-            type="number"
+            type="text"
             min="1900"
             max={new Date().getFullYear() + 1}
             value={formData.year}
             inputMode="numeric"
-            pattern="[0-9]*"
             onChange={(e) => {
               const sanitized = sanitizeNumberInput(e.target.value);
               setFormData({
                 ...formData,
-                year: sanitized ? parseInt(sanitized, 10) : 0,
+                year: sanitized,
               });
             }}
             disabled={createMutation.isPending}
@@ -277,16 +311,15 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
           </Label>
           <Input
             id="mileage"
-            type="number"
+            type="text"
             min="0"
             value={formData.mileage}
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode="decimal"
             onChange={(e) => {
-              const sanitized = sanitizeNumberInput(e.target.value);
+              const sanitized = sanitizeDecimalInput(e.target.value);
               setFormData({
                 ...formData,
-                mileage: sanitized ? parseInt(sanitized, 10) : 0,
+                mileage: sanitized,
               });
             }}
             disabled={createMutation.isPending}
@@ -303,17 +336,15 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
           </Label>
           <Input
             id="price"
-            type="number"
+            type="text"
             min="0"
-            step="100"
             value={formData.price}
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode="decimal"
             onChange={(e) => {
-              const sanitized = sanitizeNumberInput(e.target.value);
+              const sanitized = sanitizeDecimalInput(e.target.value);
               setFormData({
                 ...formData,
-                price: sanitized ? parseInt(sanitized, 10) : 0,
+                price: sanitized,
               });
             }}
             disabled={createMutation.isPending}
@@ -328,17 +359,15 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
           </Label>
           <Input
             id="importCost"
-            type="number"
+            type="text"
             min="0"
-            step="100"
             value={formData.importCost}
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode="decimal"
             onChange={(e) => {
-              const sanitized = sanitizeNumberInput(e.target.value);
+              const sanitized = sanitizeDecimalInput(e.target.value);
               setFormData({
                 ...formData,
-                importCost: sanitized ? parseInt(sanitized, 10) : 0,
+                importCost: sanitized,
               });
             }}
             disabled={createMutation.isPending}
@@ -748,10 +777,10 @@ function EditAnnonceForm({
     sellerId: vehicle.sellerId || "",
     brand: vehicle.brand || "",
     model: vehicle.model || "",
-    year: vehicle.year || new Date().getFullYear(),
-    price: vehicle.price || 0,
-    importCost: vehicle.importCost || 0,
-    mileage: vehicle.mileage || 0,
+    year: vehicle.year?.toString() || "",
+    price: vehicle.price?.toString() || "",
+    importCost: vehicle.importCost?.toString() || "",
+    mileage: vehicle.mileage?.toString() || "",
     fuelType: (vehicle.fuelType || "essence") as FuelType,
     transmission: (vehicle.transmission || "manuelle") as Transmission,
     power: vehicle.power || "",
@@ -784,10 +813,10 @@ function EditAnnonceForm({
       sellerId: vehicle.sellerId || "",
       brand: vehicle.brand || "",
       model: vehicle.model || "",
-      year: vehicle.year || new Date().getFullYear(),
-      price: vehicle.price || 0,
-      importCost: vehicle.importCost || 0,
-      mileage: vehicle.mileage || 0,
+      year: vehicle.year?.toString() || "",
+      price: vehicle.price?.toString() || "",
+      importCost: vehicle.importCost?.toString() || "",
+      mileage: vehicle.mileage?.toString() || "",
       fuelType: (vehicle.fuelType || "essence") as FuelType,
       transmission: (vehicle.transmission || "manuelle") as Transmission,
       power: vehicle.power || "",
@@ -831,8 +860,27 @@ function EditAnnonceForm({
       return;
     }
 
+    const yearValue = parseRequiredInt(formData.year);
+    const priceValue = parseRequiredFloat(formData.price);
+    const importCostValue = parseRequiredFloat(formData.importCost);
+    const mileageValue = parseRequiredFloat(formData.mileage);
+
+    if (
+      yearValue === undefined ||
+      priceValue === undefined ||
+      importCostValue === undefined ||
+      mileageValue === undefined
+    ) {
+      toast.error("Veuillez renseigner des valeurs numériques valides");
+      return;
+    }
+
     const vehicleData = {
       ...formData,
+      year: yearValue,
+      price: priceValue,
+      importCost: importCostValue,
+      mileage: mileageValue,
       equipment,
       images,
       engineDisplacement: parseOptionalInt(formData.engineDisplacement),
@@ -875,15 +923,30 @@ function EditAnnonceForm({
     value ? parseInt(value, 10) : undefined;
   const parseOptionalFloat = (value: string) =>
     value ? Number(value) : undefined;
+  const parseRequiredInt = (value: string) => {
+    const parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  };
+  const parseRequiredFloat = (value: string) => {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  };
+
+  const yearValue = parseRequiredInt(formData.year);
+  const priceValue = parseRequiredFloat(formData.price);
+  const mileageValue = parseRequiredFloat(formData.mileage);
 
   const isFormValid =
     formData.brand.trim() !== "" &&
     formData.model.trim() !== "" &&
     formData.sellerId !== "" &&
     formData.location.trim() !== "" &&
-    formData.year > 1900 &&
-    formData.price > 0 &&
-    formData.mileage >= 0;
+    yearValue !== undefined &&
+    yearValue > 1900 &&
+    priceValue !== undefined &&
+    priceValue > 0 &&
+    mileageValue !== undefined &&
+    mileageValue >= 0;
 
   return (
     <form
@@ -935,17 +998,16 @@ function EditAnnonceForm({
           </Label>
           <Input
             id="year_edit"
-            type="number"
+            type="text"
             min="1900"
             max={new Date().getFullYear() + 1}
             value={formData.year}
             inputMode="numeric"
-            pattern="[0-9]*"
             onChange={(e) => {
               const sanitized = sanitizeNumberInput(e.target.value);
               setFormData({
                 ...formData,
-                year: sanitized ? parseInt(sanitized, 10) : 0,
+                year: sanitized,
               });
             }}
             disabled={updateMutation.isPending}
@@ -960,16 +1022,15 @@ function EditAnnonceForm({
           </Label>
           <Input
             id="mileage_edit"
-            type="number"
+            type="text"
             min="0"
             value={formData.mileage}
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode="decimal"
             onChange={(e) => {
-              const sanitized = sanitizeNumberInput(e.target.value);
+              const sanitized = sanitizeDecimalInput(e.target.value);
               setFormData({
                 ...formData,
-                mileage: sanitized ? parseInt(sanitized, 10) : 0,
+                mileage: sanitized,
               });
             }}
             disabled={updateMutation.isPending}
@@ -986,17 +1047,15 @@ function EditAnnonceForm({
           </Label>
           <Input
             id="price_edit"
-            type="number"
+            type="text"
             min="0"
-            step="100"
             value={formData.price}
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode="decimal"
             onChange={(e) => {
-              const sanitized = sanitizeNumberInput(e.target.value);
+              const sanitized = sanitizeDecimalInput(e.target.value);
               setFormData({
                 ...formData,
-                price: sanitized ? parseInt(sanitized, 10) : 0,
+                price: sanitized,
               });
             }}
             disabled={updateMutation.isPending}
@@ -1009,17 +1068,15 @@ function EditAnnonceForm({
           <Label htmlFor="importCost_edit">Coût import (€)</Label>
           <Input
             id="importCost_edit"
-            type="number"
+            type="text"
             min="0"
-            step="100"
             value={formData.importCost}
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode="decimal"
             onChange={(e) => {
-              const sanitized = sanitizeNumberInput(e.target.value);
+              const sanitized = sanitizeDecimalInput(e.target.value);
               setFormData({
                 ...formData,
-                importCost: sanitized ? parseInt(sanitized, 10) : 0,
+                importCost: sanitized,
               });
             }}
             disabled={updateMutation.isPending}
@@ -1615,6 +1672,7 @@ function ListingsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const itemsPerPage = 20;
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<"list" | "grid">(() => {
@@ -1883,7 +1941,6 @@ function ListingsPage() {
               </CardDescription>
             </div>
 
-            {/*
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -1901,7 +1958,6 @@ function ListingsPage() {
                 <AddAnnonceForm onClose={() => setIsAddDialogOpen(false)} />
               </DialogContent>
             </Dialog>
-            */}
           </CardHeader>
 
           <CardContent>

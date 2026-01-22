@@ -45,7 +45,7 @@ export function Sidebar() {
       <div className="space-y-4 py-4">
         <div className="px-3 py-2">
           <div className="mb-6 px-4">
-            <h2 className="text-2xl font-bold tracking-tight">Auto Import Italia</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Strada Import</h2>
           </div>
           <div className="space-y-6">
             {menuItems

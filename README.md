@@ -1,6 +1,6 @@
-# AutoImport Italia - Interface Admin
+# Strada Import - Interface Admin
 
-Interface d'administration pour la plateforme AutoImport Italia, développée avec React, TypeScript, Vite et Shadcn UI.
+Interface d'administration pour la plateforme Strada Import, développée avec React, TypeScript, Vite et Shadcn UI.
 
 ## 🚀 Technologies utilisées
 
@@ -163,4 +163,4 @@ Pour ajouter une nouvelle page :
 
 ## 📄 License
 
-Projet privé - AutoImport Italia
+Projet privé - Strada Import

@@ -26,8 +26,8 @@ function ConversationsPage() {
     }),
   })
 
-  // Filtrer les conversations par recherche
-  const filteredConversations = conversations?.filter((conv) => {
+  // Filtrer et trier les conversations
+  const filteredConversations = (conversations?.filter((conv) => {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
     return (
@@ -37,7 +37,13 @@ function ConversationsPage() {
       conv.listing?.model?.toLowerCase().includes(query) ||
       conv.vehicleDescription?.toLowerCase().includes(query)
     )
-  }) || []
+  }) || []).sort((a, b) => {
+    // Trier par date du dernier message (ou date de mise à jour si pas de message)
+    // Les conversations sans messages (lastMessageAt null) en bas
+    const dateA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : (a.updatedAt ? new Date(a.updatedAt).getTime() : 0)
+    const dateB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : (b.updatedAt ? new Date(b.updatedAt).getTime() : 0)
+    return dateB - dateA // Plus récent en premier
+  })
 
   // Conversation sélectionnée
   const selectedConversation = conversations?.find(c => c.id === selectedConversationId)

@@ -184,7 +184,11 @@ export function ConversationList({
                       {conversation.status === 'active' ? 'Active' : 'Fermée'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(conversation.lastMessageAt || conversation.updatedAt)}
+                      {conversation.lastMessageAt 
+                        ? formatDate(conversation.lastMessageAt)
+                        : conversation.updatedAt
+                        ? formatDate(conversation.updatedAt)
+                        : 'Aucun message'}
                     </span>
                   </div>
                 </div>

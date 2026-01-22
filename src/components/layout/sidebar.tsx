@@ -32,7 +32,7 @@ export function Sidebar() {
         ...(isAdmin ? [{ icon: Store, label: 'Vendeurs', href: '/sellers' }] : []),
         ...(isAgent
           ? [
-              { icon: ClipboardList, label: 'Réservations', href: '/quotes' },
+        { icon: ClipboardList, label: 'Réservations', href: '/reservations' },
               { icon: MessageSquare, label: 'Conversations', href: '/conversations' },
             ]
           : []),

@@ -23,10 +23,17 @@ export const quotesService = {
   },
 
   requestQuote: async (quoteRequest: {
+    userId: string
     vehicleId?: string
     externalListingId?: string
   }): Promise<Quote> => {
     const { data } = await apiClient.post<Quote>('/quotes/request', quoteRequest)
+    return data
+  },
+  getQuotePdf: async (id: string): Promise<Blob> => {
+    const { data } = await apiClient.get(`/quotes/${id}/pdf`, {
+      responseType: 'blob',
+    })
     return data
   },
 

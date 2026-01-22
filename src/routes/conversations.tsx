@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, useSearch } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
 import { authService } from '@/services/auth.service'
@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 function ConversationsPage() {
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const search = useSearch({ from: '/conversations' })
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
+    (search as { conversationId?: string })?.conversationId || null
+  )
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all')
   const [showList, setShowList] = useState(true)
@@ -39,12 +42,19 @@ function ConversationsPage() {
   // Conversation sélectionnée
   const selectedConversation = conversations?.find(c => c.id === selectedConversationId)
 
-  // Auto-sélectionner la première conversation si aucune n'est sélectionnée
+  // Auto-sélectionner la conversation depuis l'URL ou la première conversation
   useEffect(() => {
-    if (!selectedConversationId && filteredConversations.length > 0) {
+    const urlConversationId = (search as { conversationId?: string })?.conversationId
+    if (urlConversationId) {
+      // Vérifier que la conversation existe dans la liste
+      const conversationExists = filteredConversations.some(c => c.id === urlConversationId)
+      if (conversationExists) {
+        setSelectedConversationId(urlConversationId)
+      }
+    } else if (!selectedConversationId && filteredConversations.length > 0) {
       setSelectedConversationId(filteredConversations[0].id)
     }
-  }, [filteredConversations, selectedConversationId])
+  }, [filteredConversations, selectedConversationId, search])
 
   return (
     <DashboardLayout>
@@ -111,6 +121,11 @@ function ConversationsPage() {
 }
 
 export const Route = createFileRoute('/conversations')({
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      conversationId: (search.conversationId as string) || undefined,
+    }
+  },
   beforeLoad: async () => {
     const user = await authService.getCurrentUser().catch(() => null)
     if (!user || (user.role !== 'admin' && user.role !== 'agent')) {

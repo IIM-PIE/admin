@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -55,6 +55,7 @@ import {
   MessageSquare,
   Send,
   Plus,
+  ExternalLink,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -1576,6 +1577,7 @@ function ListingConversationsDialog({
   listing: Vehicle
   onClose: () => void 
 }) {
+  const navigate = useNavigate()
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
 
   // Récupérer les conversations du listing
@@ -1652,12 +1654,30 @@ function ListingConversationsDialog({
             {selectedConversation ? (
               <>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">
-                    Conversation avec {selectedConversation.user?.name}
-                  </CardTitle>
-                  <CardDescription>
-                    {selectedConversation.user?.email}
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base">
+                        Conversation avec {selectedConversation.user?.name}
+                      </CardTitle>
+                      <CardDescription>
+                        {selectedConversation.user?.email}
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        navigate({ 
+                          to: '/conversations', 
+                          search: { conversationId: selectedConversation.id } 
+                        })
+                        onClose()
+                      }}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Voir en détail
+                    </Button>
+                  </div>
                 </CardHeader>
 
                 <CardContent className="flex-1 overflow-hidden p-4 flex flex-col">

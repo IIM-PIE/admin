@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -47,6 +47,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { usersService } from "@/services/users.service";
+import { sellersService } from "@/services/sellers.service";
+import { authService } from "@/services/auth.service";
 import {
   Dialog,
   DialogContent,
@@ -119,6 +121,8 @@ const getRoleBadge = (role: string) => {
       return <Badge variant="destructive">Admin</Badge>;
     case "agent":
       return <Badge variant="warning">Agent</Badge>;
+    case "seller":
+      return <Badge variant="outline">Seller</Badge>;
     case "customer":
       return <Badge variant="secondary">Client</Badge>;
     default:
@@ -129,6 +133,10 @@ const getRoleBadge = (role: string) => {
 // Composant formulaire d'ajout d'utilisateur
 function AddUserForm({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
+  const { data: sellers = [], isLoading: isLoadingSellers } = useQuery({
+    queryKey: ["sellers", { page: 1, limit: 1000 }],
+    queryFn: () => sellersService.getSellers({ page: 1, limit: 1000 }),
+  });
   const [selectedCountry, setSelectedCountry] = useState<string>("FR");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [formData, setFormData] = useState({
@@ -136,7 +144,8 @@ function AddUserForm({ onClose }: { onClose: () => void }) {
     email: "",
     phone: "",
     password: generatePassword(Math.floor(Math.random() * 5) + 8), // 8-12 caractères
-    role: "customer" as "customer" | "admin" | "agent",
+    role: "customer" as "customer" | "admin" | "agent" | "seller",
+    sellerId: "",
     address: "",
   });
 
@@ -186,7 +195,8 @@ function AddUserForm({ onClose }: { onClose: () => void }) {
                       isValidEmail(formData.email) &&
                       phoneNumber.trim() !== "" &&
                       isValidPhone() &&
-                      formData.password.trim() !== "";
+                      formData.password.trim() !== "" &&
+                      (formData.role !== "seller" || formData.sellerId.trim() !== "");
 
   const createMutation = useMutation({
     mutationFn: usersService.createUser,
@@ -206,6 +216,10 @@ function AddUserForm({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.password || !phoneNumber || !formData.role) {
       toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+    if (formData.role === "seller" && !formData.sellerId) {
+      toast.error("Veuillez sélectionner un vendeur");
       return;
     }
     createMutation.mutate(formData);
@@ -315,7 +329,13 @@ function AddUserForm({ onClose }: { onClose: () => void }) {
         </Label>
         <Select
           value={formData.role}
-          onValueChange={(value) => setFormData({ ...formData, role: value as "customer" | "admin" | "agent" })}
+          onValueChange={(value) =>
+            setFormData((prev) => ({
+              ...prev,
+              role: value as "customer" | "admin" | "agent" | "seller",
+              sellerId: value === "seller" ? prev.sellerId : "",
+            }))
+          }
           disabled={createMutation.isPending}
           required
         >
@@ -326,9 +346,40 @@ function AddUserForm({ onClose }: { onClose: () => void }) {
             <SelectItem value="customer">Client</SelectItem>
             <SelectItem value="agent">Agent</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="seller">Seller</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {formData.role === "seller" && (
+        <div className="space-y-2">
+          <Label htmlFor="seller">
+            Vendeur associé <span className="text-destructive">*</span>
+          </Label>
+          <Select
+            value={formData.sellerId}
+            onValueChange={(value) => setFormData({ ...formData, sellerId: value })}
+            disabled={createMutation.isPending || isLoadingSellers}
+            required
+          >
+            <SelectTrigger id="seller">
+              <SelectValue placeholder="Sélectionnez un vendeur" />
+            </SelectTrigger>
+            <SelectContent>
+              {sellers.map((seller) => (
+                <SelectItem key={seller.id} value={seller.id}>
+                  {seller.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {sellers.length === 0 && !isLoadingSellers && (
+            <p className="text-xs text-muted-foreground">
+              Aucun vendeur disponible. Créez un vendeur avant d'ajouter un utilisateur seller.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="address">Adresse (optionnel)</Label>
@@ -406,13 +457,18 @@ function AddUserForm({ onClose }: { onClose: () => void }) {
 // Composant formulaire de modification d'utilisateur
 function EditUserForm({ user, onClose }: { user: any; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const { data: sellers = [], isLoading: isLoadingSellers } = useQuery({
+    queryKey: ["sellers", { page: 1, limit: 1000 }],
+    queryFn: () => sellersService.getSellers({ page: 1, limit: 1000 }),
+  });
   const [selectedCountry, setSelectedCountry] = useState<string>("FR");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [formData, setFormData] = useState({
     name: user.name || "",
     email: user.email || "",
     phone: user.phone || "",
-    role: user.role || "customer" as "customer" | "admin" | "agent",
+    role: user.role || "customer" as "customer" | "admin" | "agent" | "seller",
+    sellerId: user.sellerId || "",
     address: user.address || "",
   });
 
@@ -469,7 +525,8 @@ function EditUserForm({ user, onClose }: { user: any; onClose: () => void }) {
   const isFormValid = formData.name.trim() !== "" &&
                       isValidEmail(formData.email) &&
                       phoneNumber.trim() !== "" &&
-                      isValidPhone();
+                      isValidPhone() &&
+                      (formData.role !== "seller" || formData.sellerId.trim() !== "");
 
   const updateMutation = useMutation({
     mutationFn: (data: any) => usersService.updateUser(user.id, data),
@@ -489,6 +546,10 @@ function EditUserForm({ user, onClose }: { user: any; onClose: () => void }) {
     e.preventDefault();
     if (!formData.name || !formData.email || !phoneNumber || !formData.role) {
       toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+    if (formData.role === "seller" && !formData.sellerId) {
+      toast.error("Veuillez sélectionner un vendeur");
       return;
     }
     updateMutation.mutate(formData);
@@ -587,7 +648,13 @@ function EditUserForm({ user, onClose }: { user: any; onClose: () => void }) {
         </Label>
         <Select
           value={formData.role}
-          onValueChange={(value) => setFormData({ ...formData, role: value as "customer" | "admin" | "agent" })}
+          onValueChange={(value) =>
+            setFormData((prev) => ({
+              ...prev,
+              role: value as "customer" | "admin" | "agent" | "seller",
+              sellerId: value === "seller" ? prev.sellerId : "",
+            }))
+          }
           disabled={updateMutation.isPending}
           required
         >
@@ -598,9 +665,40 @@ function EditUserForm({ user, onClose }: { user: any; onClose: () => void }) {
             <SelectItem value="customer">Client</SelectItem>
             <SelectItem value="agent">Agent</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="seller">Seller</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {formData.role === "seller" && (
+        <div className="space-y-2">
+          <Label htmlFor="edit-seller">
+            Vendeur associé <span className="text-destructive">*</span>
+          </Label>
+          <Select
+            value={formData.sellerId}
+            onValueChange={(value) => setFormData({ ...formData, sellerId: value })}
+            disabled={updateMutation.isPending || isLoadingSellers}
+            required
+          >
+            <SelectTrigger id="edit-seller">
+              <SelectValue placeholder="Sélectionnez un vendeur" />
+            </SelectTrigger>
+            <SelectContent>
+              {sellers.map((seller) => (
+                <SelectItem key={seller.id} value={seller.id}>
+                  {seller.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {sellers.length === 0 && !isLoadingSellers && (
+            <p className="text-xs text-muted-foreground">
+              Aucun vendeur disponible. Créez un vendeur avant d'ajouter un utilisateur seller.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="edit-address">Adresse (optionnel)</Label>
@@ -1009,5 +1107,11 @@ function UsersPage() {
 }
 
 export const Route = createFileRoute("/users")({
+  beforeLoad: async () => {
+    const user = await authService.getCurrentUser().catch(() => null);
+    if (!user || user.role !== "admin") {
+      throw redirect({ to: "/" });
+    }
+  },
   component: UsersPage,
 });

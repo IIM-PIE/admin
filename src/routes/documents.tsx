@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
@@ -240,5 +240,8 @@ function DocumentsPage() {
 }
 
 export const Route = createFileRoute('/documents')({
+  beforeLoad: () => {
+    throw redirect({ to: '/' })
+  },
   component: DocumentsPage,
 })

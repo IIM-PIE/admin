@@ -1,5 +1,5 @@
 // User types
-export type UserRole = 'customer' | 'admin' | 'agent'
+export type UserRole = 'customer' | 'admin' | 'agent' | 'seller'
 
 export interface User {
   id: string
@@ -8,10 +8,12 @@ export interface User {
   phone?: string
   address?: string
   role: UserRole
+  sellerId?: string
   isVerified: boolean
   avatarUrl?: string
   createdAt: string
   updatedAt: string
+  seller?: Seller
 }
 
 // Vehicle types
@@ -19,9 +21,28 @@ export type FuelType = 'essence' | 'diesel' | 'hybride' | 'electrique'
 export type Transmission = 'manuelle' | 'automatique'
 export type VehicleStatus = 'available' | 'reserved' | 'sold'
 
+export interface ListingStats {
+  total: number
+  available: number
+  reserved: number
+  sold: number
+  importRevenue?: number
+}
+
+export interface ListingFilterOptions {
+  brands: string[]
+  locations: string[]
+  sellers: Array<{
+    id: string
+    name: string
+  }>
+}
+
 export interface Vehicle {
   id: string
   sellerId: string
+  reservedByUserId?: string
+  reservedAt?: string
   brand: string
   model: string
   year: number
@@ -31,6 +52,12 @@ export interface Vehicle {
   fuelType: FuelType
   transmission: Transmission
   power?: string
+  engineDisplacement?: number
+  engineType?: string
+  acceleration?: number
+  topSpeed?: number
+  consumption?: number
+  co2?: number
   location: string
   description?: string
   equipment: string[]
@@ -41,6 +68,7 @@ export interface Vehicle {
   createdAt: string
   updatedAt: string
   seller?: Seller
+  reservedByUser?: User
 }
 
 // Seller types
@@ -231,6 +259,7 @@ export interface CreateUserAdminData {
   name: string
   phone: string
   role: UserRole
+  sellerId?: string
   address?: string
 }
 

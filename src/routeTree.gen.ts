@@ -9,24 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VehiclesRouteImport } from './routes/vehicles'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as SellersRouteImport } from './routes/sellers'
 import { Route as QuotesRouteImport } from './routes/quotes'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as ImportsRouteImport } from './routes/imports'
 import { Route as ExternalListingsRouteImport } from './routes/external-listings'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as ConversationsRouteImport } from './routes/conversations'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as QuotesIndexRouteImport } from './routes/quotes.index'
+import { Route as QuotesIdRouteImport } from './routes/quotes.$id'
 
-const VehiclesRoute = VehiclesRouteImport.update({
-  id: '/vehicles',
-  path: '/vehicles',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -57,6 +54,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListingsRoute = ListingsRouteImport.update({
+  id: '/listings',
+  path: '/listings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImportsRoute = ImportsRouteImport.update({
   id: '/imports',
   path: '/imports',
@@ -82,6 +84,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QuotesIndexRoute = QuotesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => QuotesRoute,
+} as any)
+const QuotesIdRoute = QuotesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => QuotesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,13 +101,15 @@ export interface FileRoutesByFullPath {
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
   '/imports': typeof ImportsRoute
+  '/listings': typeof ListingsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
-  '/quotes': typeof QuotesRoute
+  '/quotes': typeof QuotesRouteWithChildren
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/vehicles': typeof VehiclesRoute
+  '/quotes/$id': typeof QuotesIdRoute
+  '/quotes/': typeof QuotesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -103,13 +117,14 @@ export interface FileRoutesByTo {
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
   '/imports': typeof ImportsRoute
+  '/listings': typeof ListingsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
-  '/quotes': typeof QuotesRoute
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/vehicles': typeof VehiclesRoute
+  '/quotes/$id': typeof QuotesIdRoute
+  '/quotes': typeof QuotesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,13 +133,15 @@ export interface FileRoutesById {
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
   '/imports': typeof ImportsRoute
+  '/listings': typeof ListingsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
-  '/quotes': typeof QuotesRoute
+  '/quotes': typeof QuotesRouteWithChildren
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/vehicles': typeof VehiclesRoute
+  '/quotes/$id': typeof QuotesIdRoute
+  '/quotes/': typeof QuotesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -134,13 +151,15 @@ export interface FileRouteTypes {
     | '/documents'
     | '/external-listings'
     | '/imports'
+    | '/listings'
     | '/login'
     | '/notifications'
     | '/quotes'
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/vehicles'
+    | '/quotes/$id'
+    | '/quotes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,13 +167,14 @@ export interface FileRouteTypes {
     | '/documents'
     | '/external-listings'
     | '/imports'
+    | '/listings'
     | '/login'
     | '/notifications'
-    | '/quotes'
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/vehicles'
+    | '/quotes/$id'
+    | '/quotes'
   id:
     | '__root__'
     | '/'
@@ -162,13 +182,15 @@ export interface FileRouteTypes {
     | '/documents'
     | '/external-listings'
     | '/imports'
+    | '/listings'
     | '/login'
     | '/notifications'
     | '/quotes'
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/vehicles'
+    | '/quotes/$id'
+    | '/quotes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -177,24 +199,17 @@ export interface RootRouteChildren {
   DocumentsRoute: typeof DocumentsRoute
   ExternalListingsRoute: typeof ExternalListingsRoute
   ImportsRoute: typeof ImportsRoute
+  ListingsRoute: typeof ListingsRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
-  QuotesRoute: typeof QuotesRoute
+  QuotesRoute: typeof QuotesRouteWithChildren
   SellersRoute: typeof SellersRoute
   StatisticsRoute: typeof StatisticsRoute
   UsersRoute: typeof UsersRoute
-  VehiclesRoute: typeof VehiclesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/vehicles': {
-      id: '/vehicles'
-      path: '/vehicles'
-      fullPath: '/vehicles'
-      preLoaderRoute: typeof VehiclesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/users': {
       id: '/users'
       path: '/users'
@@ -237,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/listings': {
+      id: '/listings'
+      path: '/listings'
+      fullPath: '/listings'
+      preLoaderRoute: typeof ListingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/imports': {
       id: '/imports'
       path: '/imports'
@@ -272,8 +294,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/quotes/': {
+      id: '/quotes/'
+      path: '/'
+      fullPath: '/quotes/'
+      preLoaderRoute: typeof QuotesIndexRouteImport
+      parentRoute: typeof QuotesRoute
+    }
+    '/quotes/$id': {
+      id: '/quotes/$id'
+      path: '/$id'
+      fullPath: '/quotes/$id'
+      preLoaderRoute: typeof QuotesIdRouteImport
+      parentRoute: typeof QuotesRoute
+    }
   }
 }
+
+interface QuotesRouteChildren {
+  QuotesIdRoute: typeof QuotesIdRoute
+  QuotesIndexRoute: typeof QuotesIndexRoute
+}
+
+const QuotesRouteChildren: QuotesRouteChildren = {
+  QuotesIdRoute: QuotesIdRoute,
+  QuotesIndexRoute: QuotesIndexRoute,
+}
+
+const QuotesRouteWithChildren =
+  QuotesRoute._addFileChildren(QuotesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -281,13 +330,13 @@ const rootRouteChildren: RootRouteChildren = {
   DocumentsRoute: DocumentsRoute,
   ExternalListingsRoute: ExternalListingsRoute,
   ImportsRoute: ImportsRoute,
+  ListingsRoute: ListingsRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
-  QuotesRoute: QuotesRoute,
+  QuotesRoute: QuotesRouteWithChildren,
   SellersRoute: SellersRoute,
   StatisticsRoute: StatisticsRoute,
   UsersRoute: UsersRoute,
-  VehiclesRoute: VehiclesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

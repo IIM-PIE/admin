@@ -1,4 +1,4 @@
-import { Bell, User } from 'lucide-react'
+import { User } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,15 +21,15 @@ export function Header() {
     const routes: Record<string, string> = {
       '/': 'Dashboard',
       '/users': 'Utilisateurs',
-      '/vehicles': 'Véhicules',
-      '/quotes': 'Devis',
-      '/imports': 'Importations',
-      '/external-listings': 'Annonces Externes',
-      '/sellers': 'Vendeurs',
-      '/documents': 'Documents',
+      '/listings': 'Annonces',
+      '/quotes': 'Réservations',
       '/conversations': 'Conversations',
-      '/notifications': 'Notifications',
       '/statistics': 'Statistiques',
+      '/sellers': 'Vendeurs',
+    }
+
+    if (pathname.startsWith('/quotes/')) {
+      return 'Réservation'
     }
 
     return routes[pathname] || 'Dashboard'
@@ -53,11 +53,6 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
-        </Button>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -72,9 +67,6 @@ export function Header() {
                 {user?.role && <div className="pt-1">{getRoleBadge(user.role)}</div>}
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Profil</DropdownMenuItem>
-            <DropdownMenuItem>Paramètres</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive"

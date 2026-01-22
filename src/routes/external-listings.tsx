@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import {
@@ -212,5 +212,8 @@ function ExternalListingsPage() {
 }
 
 export const Route = createFileRoute('/external-listings')({
+  beforeLoad: () => {
+    throw redirect({ to: '/' })
+  },
   component: ExternalListingsPage,
 })

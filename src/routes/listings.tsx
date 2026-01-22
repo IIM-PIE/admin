@@ -35,9 +35,23 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Search, Plus, MoreHorizontal, X } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Search,
+  MoreHorizontal,
+  X,
+  List,
+  LayoutGrid,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,13 +60,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { vehiclesService } from "@/services/vehicles.service";
+import { listingsService } from "@/services/listings.service";
 import { sellersService } from "@/services/sellers.service";
 import type { FuelType, Transmission, VehicleStatus, Vehicle } from "@/types";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
 
 const MAX_IMAGES = 4;
 const sanitizeNumberInput = (value: string) => value.replace(/\D/g, "");
+const sanitizeDecimalInput = (value: string) =>
+  value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -67,8 +84,8 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-// Composant formulaire d'ajout de véhicule
-function AddVehicleForm({ onClose }: { onClose: () => void }) {
+// Composant formulaire d'ajout d'annonce
+export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient();
   const [equipment, setEquipment] = useState<string[]>([]);
   const [currentEquipment, setCurrentEquipment] = useState("");
@@ -86,6 +103,12 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
     fuelType: "essence" as FuelType,
     transmission: "manuelle" as Transmission,
     power: "",
+    engineDisplacement: "",
+    engineType: "",
+    acceleration: "",
+    topSpeed: "",
+    consumption: "",
+    co2: "",
     location: "",
     description: "",
     equipment: [] as string[],
@@ -102,10 +125,10 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
   });
 
   const createMutation = useMutation({
-    mutationFn: vehiclesService.createVehicle,
+    mutationFn: listingsService.createListing,
     onSuccess: () => {
-      toast.success("Véhicule créé avec succès");
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success("Annonce créée avec succès");
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
       onClose();
     },
     onError: (error: any) => {
@@ -126,6 +149,11 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
       ...formData,
       equipment,
       images,
+      engineDisplacement: parseOptionalInt(formData.engineDisplacement),
+      acceleration: parseOptionalFloat(formData.acceleration),
+      topSpeed: parseOptionalInt(formData.topSpeed),
+      consumption: parseOptionalFloat(formData.consumption),
+      co2: parseOptionalInt(formData.co2),
     };
 
     createMutation.mutate(vehicleData);
@@ -156,6 +184,11 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
   const removeImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
   };
+
+  const parseOptionalInt = (value: string) =>
+    value ? parseInt(value, 10) : undefined;
+  const parseOptionalFloat = (value: string) =>
+    value ? Number(value) : undefined;
 
   const isFormValid =
     formData.brand.trim() !== "" &&
@@ -395,6 +428,104 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
+      <div className="space-y-3">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+          Données techniques
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="engineDisplacement">Cylindrée (cm³)</Label>
+            <Input
+              id="engineDisplacement"
+              placeholder="1998"
+              value={formData.engineDisplacement}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                setFormData({ ...formData, engineDisplacement: sanitized });
+              }}
+              disabled={createMutation.isPending}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="engineType">Moteur</Label>
+            <Input
+              id="engineType"
+              placeholder="V6 biturbo"
+              value={formData.engineType}
+              onChange={(e) =>
+                setFormData({ ...formData, engineType: e.target.value })
+              }
+              disabled={createMutation.isPending}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="acceleration">0-100 km/h (s)</Label>
+            <Input
+              id="acceleration"
+              placeholder="5.8"
+              value={formData.acceleration}
+              inputMode="decimal"
+              onChange={(e) => {
+                const sanitized = sanitizeDecimalInput(e.target.value);
+                setFormData({ ...formData, acceleration: sanitized });
+              }}
+              disabled={createMutation.isPending}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="topSpeed">Vitesse max (km/h)</Label>
+            <Input
+              id="topSpeed"
+              placeholder="240"
+              value={formData.topSpeed}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                setFormData({ ...formData, topSpeed: sanitized });
+              }}
+              disabled={createMutation.isPending}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="consumption">Consommation (L/100km)</Label>
+            <Input
+              id="consumption"
+              placeholder="6.5"
+              value={formData.consumption}
+              inputMode="decimal"
+              onChange={(e) => {
+                const sanitized = sanitizeDecimalInput(e.target.value);
+                setFormData({ ...formData, consumption: sanitized });
+              }}
+              disabled={createMutation.isPending}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="co2">CO2 (g/km)</Label>
+            <Input
+              id="co2"
+              placeholder="120"
+              value={formData.co2}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                setFormData({ ...formData, co2: sanitized });
+              }}
+              disabled={createMutation.isPending}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Vendeur */}
         <div className="space-y-2">
@@ -482,7 +613,7 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
         <Label htmlFor="description">Description</Label>
         <Textarea
           id="description"
-          placeholder="Description détaillée du véhicule..."
+          placeholder="Description détaillée de l'annonce..."
           value={formData.description}
           onChange={(e) =>
             setFormData({ ...formData, description: e.target.value })
@@ -589,15 +720,15 @@ function AddVehicleForm({ onClose }: { onClose: () => void }) {
           type="submit"
           disabled={!isFormValid || createMutation.isPending}
         >
-          {createMutation.isPending ? "Création..." : "Créer le véhicule"}
+          {createMutation.isPending ? "Création..." : "Créer l'annonce"}
         </Button>
       </div>
     </form>
   );
 }
 
-// Composant formulaire d'édition de véhicule
-function EditVehicleForm({
+// Composant formulaire d'édition d'annonce
+function EditAnnonceForm({
   vehicle,
   onClose,
 }: {
@@ -621,6 +752,12 @@ function EditVehicleForm({
     fuelType: (vehicle.fuelType || "essence") as FuelType,
     transmission: (vehicle.transmission || "manuelle") as Transmission,
     power: vehicle.power || "",
+    engineDisplacement: vehicle.engineDisplacement?.toString() || "",
+    engineType: vehicle.engineType || "",
+    acceleration: vehicle.acceleration?.toString() || "",
+    topSpeed: vehicle.topSpeed?.toString() || "",
+    consumption: vehicle.consumption?.toString() || "",
+    co2: vehicle.co2?.toString() || "",
     location: vehicle.location || "",
     description: vehicle.description || "",
     equipment: vehicle.equipment || [],
@@ -651,6 +788,12 @@ function EditVehicleForm({
       fuelType: (vehicle.fuelType || "essence") as FuelType,
       transmission: (vehicle.transmission || "manuelle") as Transmission,
       power: vehicle.power || "",
+      engineDisplacement: vehicle.engineDisplacement?.toString() || "",
+      engineType: vehicle.engineType || "",
+      acceleration: vehicle.acceleration?.toString() || "",
+      topSpeed: vehicle.topSpeed?.toString() || "",
+      consumption: vehicle.consumption?.toString() || "",
+      co2: vehicle.co2?.toString() || "",
       location: vehicle.location || "",
       description: vehicle.description || "",
       equipment: vehicle.equipment || [],
@@ -665,10 +808,10 @@ function EditVehicleForm({
 
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<Vehicle>) =>
-      vehiclesService.updateVehicle(vehicle.id, payload),
+      listingsService.updateListing(vehicle.id, payload),
     onSuccess: () => {
-      toast.success("Véhicule mis à jour avec succès");
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success("Annonce mise à jour avec succès");
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
       onClose();
     },
     onError: (error: any) => {
@@ -689,6 +832,11 @@ function EditVehicleForm({
       ...formData,
       equipment,
       images,
+      engineDisplacement: parseOptionalInt(formData.engineDisplacement),
+      acceleration: parseOptionalFloat(formData.acceleration),
+      topSpeed: parseOptionalInt(formData.topSpeed),
+      consumption: parseOptionalFloat(formData.consumption),
+      co2: parseOptionalInt(formData.co2),
     };
 
     updateMutation.mutate(vehicleData);
@@ -719,6 +867,11 @@ function EditVehicleForm({
   const removeImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
   };
+
+  const parseOptionalInt = (value: string) =>
+    value ? parseInt(value, 10) : undefined;
+  const parseOptionalFloat = (value: string) =>
+    value ? Number(value) : undefined;
 
   const isFormValid =
     formData.brand.trim() !== "" &&
@@ -955,6 +1108,104 @@ function EditVehicleForm({
         </div>
       </div>
 
+      <div className="space-y-3">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+          Données techniques
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="engineDisplacement_edit">Cylindrée (cm³)</Label>
+            <Input
+              id="engineDisplacement_edit"
+              placeholder="1998"
+              value={formData.engineDisplacement}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                setFormData({ ...formData, engineDisplacement: sanitized });
+              }}
+              disabled={updateMutation.isPending}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="engineType_edit">Moteur</Label>
+            <Input
+              id="engineType_edit"
+              placeholder="V6 biturbo"
+              value={formData.engineType}
+              onChange={(e) =>
+                setFormData({ ...formData, engineType: e.target.value })
+              }
+              disabled={updateMutation.isPending}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="acceleration_edit">0-100 km/h (s)</Label>
+            <Input
+              id="acceleration_edit"
+              placeholder="5.8"
+              value={formData.acceleration}
+              inputMode="decimal"
+              onChange={(e) => {
+                const sanitized = sanitizeDecimalInput(e.target.value);
+                setFormData({ ...formData, acceleration: sanitized });
+              }}
+              disabled={updateMutation.isPending}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="topSpeed_edit">Vitesse max (km/h)</Label>
+            <Input
+              id="topSpeed_edit"
+              placeholder="240"
+              value={formData.topSpeed}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                setFormData({ ...formData, topSpeed: sanitized });
+              }}
+              disabled={updateMutation.isPending}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="consumption_edit">Consommation (L/100km)</Label>
+            <Input
+              id="consumption_edit"
+              placeholder="6.5"
+              value={formData.consumption}
+              inputMode="decimal"
+              onChange={(e) => {
+                const sanitized = sanitizeDecimalInput(e.target.value);
+                setFormData({ ...formData, consumption: sanitized });
+              }}
+              disabled={updateMutation.isPending}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="co2_edit">CO2 (g/km)</Label>
+            <Input
+              id="co2_edit"
+              placeholder="120"
+              value={formData.co2}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              onChange={(e) => {
+                const sanitized = sanitizeNumberInput(e.target.value);
+                setFormData({ ...formData, co2: sanitized });
+              }}
+              disabled={updateMutation.isPending}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Vendeur */}
         <div className="space-y-2">
@@ -1042,7 +1293,7 @@ function EditVehicleForm({
         <Label htmlFor="description_edit">Description</Label>
         <Textarea
           id="description_edit"
-          placeholder="Description détaillée du véhicule..."
+          placeholder="Description détaillée de l'annonce..."
           value={formData.description}
           onChange={(e) =>
             setFormData({ ...formData, description: e.target.value })
@@ -1158,9 +1409,9 @@ function EditVehicleForm({
   );
 }
 
-function VehiclesPage() {
+function ListingsPage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
@@ -1169,6 +1420,40 @@ function VehiclesPage() {
   const [deleteVehicle, setDeleteVehicle] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const itemsPerPage = 20;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<"list" | "grid">(() => {
+    const saved = localStorage.getItem("listings_view_mode");
+    return saved === "grid" ? "grid" : "list";
+  });
+  const [filters, setFilters] = useState<{
+    status: VehicleStatus | "all";
+    brand: string;
+    fuelType: FuelType | "all";
+    transmission: Transmission | "all";
+    sellerId: string;
+    location: string;
+    minYear: string;
+    maxYear: string;
+    minPrice: string;
+    maxPrice: string;
+  }>({
+    status: "all",
+    brand: "all",
+    fuelType: "all",
+    transmission: "all",
+    sellerId: "all",
+    location: "all",
+    minYear: "",
+    maxYear: "",
+    minPrice: "",
+    maxPrice: "",
+  });
+
+  useEffect(() => {
+    localStorage.setItem("listings_view_mode", viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -1178,25 +1463,72 @@ function VehiclesPage() {
   }, [searchTerm]);
 
   const {
-    data: vehicles,
+    data: listingsResponse,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["vehicles", debouncedSearch],
+    queryKey: ["listings", currentPage, itemsPerPage, debouncedSearch, filters],
     queryFn: () =>
-      vehiclesService.getVehicles({
-        status: "all",
-        page: 1,
-        limit: 1000,
+      listingsService.getListings({
+        status: filters.status,
+        page: currentPage,
+        limit: itemsPerPage,
         search: debouncedSearch || undefined,
+        brand: filters.brand !== "all" ? filters.brand : undefined,
+        sellerId: filters.sellerId !== "all" ? filters.sellerId : undefined,
+        location: filters.location !== "all" ? filters.location : undefined,
+        fuelType: filters.fuelType !== "all" ? filters.fuelType : undefined,
+        transmission:
+          filters.transmission !== "all" ? filters.transmission : undefined,
+        minYear: filters.minYear ? Number(filters.minYear) : undefined,
+        maxYear: filters.maxYear ? Number(filters.maxYear) : undefined,
+        minPrice: filters.minPrice ? Number(filters.minPrice) : undefined,
+        maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
       }),
   });
+  const vehicles = listingsResponse?.data || [];
+  const totalCount = listingsResponse?.meta?.total ?? vehicles.length;
+  const totalPages = listingsResponse?.meta?.pages ?? 1;
+
+  const { data: listingStats, isLoading: loadingListingStats } = useQuery({
+    queryKey: ["listings", "stats"],
+    queryFn: () => listingsService.getListingStats(),
+  });
+  const canChangeStatus = user?.role === "admin" || user?.role === "agent";
+
+  const { data: filterOptions } = useQuery({
+    queryKey: ["listings", "filter-options"],
+    queryFn: () => listingsService.getListingFilterOptions(),
+  });
+
+  const brandOptions = filterOptions?.brands || [];
+  const locationOptions = filterOptions?.locations || [];
+  const sellerOptions = filterOptions?.sellers || [];
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.status !== "all") count += 1;
+    if (filters.brand !== "all") count += 1;
+    if (filters.fuelType !== "all") count += 1;
+    if (filters.transmission !== "all") count += 1;
+    if (filters.sellerId !== "all") count += 1;
+    if (filters.location !== "all") count += 1;
+    if (filters.minYear) count += 1;
+    if (filters.maxYear) count += 1;
+    if (filters.minPrice) count += 1;
+    if (filters.maxPrice) count += 1;
+    return count;
+  }, [filters]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, filters]);
 
   const deleteMutation = useMutation({
-    mutationFn: vehiclesService.deleteVehicle,
+    mutationFn: listingsService.deleteListing,
     onSuccess: () => {
-      toast.success("Véhicule supprimé avec succès");
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success("Annonce supprimé avec succès");
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
       setDeleteVehicle(null);
     },
     onError: (error: any) => {
@@ -1206,18 +1538,76 @@ function VehiclesPage() {
     },
   });
 
-  const availableCount =
-    vehicles?.filter((v) => v.status === "available").length || 0;
-  const reservedCount =
-    vehicles?.filter((v) => v.status === "reserved").length || 0;
-  const soldCount = vehicles?.filter((v) => v.status === "sold").length || 0;
+  const availableCount = listingStats?.available ?? 0;
+  const reservedCount = listingStats?.reserved ?? 0;
+  const soldCount = listingStats?.sold ?? 0;
+  const totalListings = listingStats?.total ?? totalCount;
+  const totalListingsDisplay = loadingListingStats ? "..." : totalListings;
+  const availableCountDisplay = loadingListingStats ? "..." : availableCount;
+  const reservedCountDisplay = loadingListingStats ? "..." : reservedCount;
+  const soldCountDisplay = loadingListingStats ? "..." : soldCount;
+
+  const technicalSpecs = useMemo(() => {
+    if (!selectedVehicle) return [];
+    const specs = [
+      {
+        label: "Cylindrée",
+        value: selectedVehicle.engineDisplacement
+          ? `${selectedVehicle.engineDisplacement} cm³`
+          : undefined,
+      },
+      {
+        label: "Moteur",
+        value: selectedVehicle.engineType || undefined,
+      },
+      {
+        label: "0-100 km/h",
+        value: selectedVehicle.acceleration
+          ? `${selectedVehicle.acceleration} s`
+          : undefined,
+      },
+      {
+        label: "Vitesse max",
+        value: selectedVehicle.topSpeed
+          ? `${selectedVehicle.topSpeed} km/h`
+          : undefined,
+      },
+      {
+        label: "Consommation",
+        value: selectedVehicle.consumption
+          ? `${selectedVehicle.consumption} L/100km`
+          : undefined,
+      },
+      {
+        label: "CO2",
+        value: selectedVehicle.co2
+          ? `${selectedVehicle.co2} g/km`
+          : undefined,
+      },
+    ];
+    return specs.filter(
+      (item) =>
+        item.value !== undefined && item.value !== null && item.value !== ""
+    );
+  }, [selectedVehicle]);
+
+  const formatTechnicalLabel = (label: string) => {
+    const map: Record<string, string> = {
+      motor: "Moteur",
+      doors: "Portes",
+      moteur: "Moteur",
+      portes: "Portes",
+      cylindree: "Cylindrée",
+    };
+    return map[label] || label;
+  };
 
   const statusMutation = useMutation({
     mutationFn: (payload: { id: string; status: VehicleStatus }) =>
-      vehiclesService.updateVehicle(payload.id, { status: payload.status }),
+      listingsService.updateListing(payload.id, { status: payload.status }),
     onSuccess: () => {
       toast.success("Statut mis à jour");
-      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
       setStatusVehicle(null);
     },
     onError: (error: any) => {
@@ -1234,7 +1624,7 @@ function VehiclesPage() {
         <div className="flex items-center justify-center h-[50vh]">
           <div className="text-center">
             <p className="text-destructive mb-2">
-              Erreur lors du chargement des véhicules
+              Erreur lors du chargement des annonces
             </p>
             <p className="text-sm text-muted-foreground">
               {(error as any).response?.data?.message ||
@@ -1255,8 +1645,8 @@ function VehiclesPage() {
               <CardTitle className="text-sm font-medium">Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{vehicles?.length || 0}</div>
-              <p className="text-xs text-muted-foreground">véhicules</p>
+              <div className="text-2xl font-bold">{totalListingsDisplay}</div>
+              <p className="text-xs text-muted-foreground">annonces</p>
             </CardContent>
           </Card>
           <Card>
@@ -1264,7 +1654,7 @@ function VehiclesPage() {
               <CardTitle className="text-sm font-medium">Disponibles</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{availableCount}</div>
+              <div className="text-2xl font-bold">{availableCountDisplay}</div>
               <p className="text-xs text-muted-foreground">en vente</p>
             </CardContent>
           </Card>
@@ -1273,7 +1663,7 @@ function VehiclesPage() {
               <CardTitle className="text-sm font-medium">Réservés</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{reservedCount}</div>
+              <div className="text-2xl font-bold">{reservedCountDisplay}</div>
               <p className="text-xs text-muted-foreground">en cours</p>
             </CardContent>
           </Card>
@@ -1282,7 +1672,7 @@ function VehiclesPage() {
               <CardTitle className="text-sm font-medium">Vendus</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{soldCount}</div>
+              <div className="text-2xl font-bold">{soldCountDisplay}</div>
               <p className="text-xs text-muted-foreground">ce mois</p>
             </CardContent>
           </Card>
@@ -1291,36 +1681,38 @@ function VehiclesPage() {
         <Card>
           <CardHeader className="flex flex-row items-start justify-between space-y-0">
             <div className="flex flex-col gap-2">
-              <CardTitle>Catalogue de véhicules</CardTitle>
+              <CardTitle>Catalogue d'annonces</CardTitle>
               <CardDescription>
                 {isLoading
                   ? "Chargement..."
-                  : `${vehicles?.length || 0} véhicules au total`}
+                  : `${totalCount} annonces au total${totalPages > 1 ? ` - Page ${currentPage} sur ${totalPages}` : ""}`}
               </CardDescription>
             </div>
 
+            {/*
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Ajouter un véhicule
+                  Ajouter une annonce
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
-                  <DialogTitle>Ajouter un véhicule</DialogTitle>
+                  <DialogTitle>Ajouter une annonce</DialogTitle>
                   <DialogDescription>
-                    Ajoutez un nouveau véhicule au catalogue.
+                    Ajoutez une nouvelle annonce au catalogue.
                   </DialogDescription>
                 </DialogHeader>
-                <AddVehicleForm onClose={() => setIsAddDialogOpen(false)} />
+                <AddAnnonceForm onClose={() => setIsAddDialogOpen(false)} />
               </DialogContent>
             </Dialog>
+            */}
           </CardHeader>
 
           <CardContent>
-            <div className="mb-4">
-              <div className="relative">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="relative md:flex-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Rechercher par marque, modèle..."
@@ -1329,6 +1721,309 @@ function VehiclesPage() {
                   className="pl-8"
                 />
               </div>
+              <div className="flex items-center gap-2">
+                <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                  <SheetTrigger asChild>
+                    <Button type="button" variant="outline">
+                      Filtres
+                      {activeFiltersCount > 0 && (
+                        <Badge
+                          variant="secondary"
+                          className="ml-2 rounded-full px-2 py-0.5 text-xs"
+                        >
+                          {activeFiltersCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="w-[360px] sm:w-[420px]">
+                    <SheetHeader>
+                      <SheetTitle>Filtres</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6 space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          General
+                        </p>
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label>Statut</Label>
+                            <Select
+                              value={filters.status}
+                              onValueChange={(value) =>
+                                setFilters((prev) => ({
+                                  ...prev,
+                                  status: value as VehicleStatus | "all",
+                                }))
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Statut" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">
+                                  Tous les statuts
+                                </SelectItem>
+                                <SelectItem value="available">
+                                  Disponible
+                                </SelectItem>
+                                <SelectItem value="reserved">Réservé</SelectItem>
+                                <SelectItem value="sold">Vendu</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Marque</Label>
+                            <Select
+                              value={filters.brand}
+                              onValueChange={(value) =>
+                                setFilters((prev) => ({
+                                  ...prev,
+                                  brand: value,
+                                }))
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Marque" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">
+                                  Toutes les marques
+                                </SelectItem>
+                                {brandOptions.map((brand) => (
+                                  <SelectItem key={brand} value={brand}>
+                                    {brand}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Vendeur</Label>
+                            <Select
+                              value={filters.sellerId}
+                              onValueChange={(value) =>
+                                setFilters((prev) => ({
+                                  ...prev,
+                                  sellerId: value,
+                                }))
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Vendeur" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">
+                                  Tous les vendeurs
+                                </SelectItem>
+                                {sellerOptions.map((seller) => (
+                                  <SelectItem key={seller.id} value={seller.id}>
+                                    {seller.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Localisation</Label>
+                            <Select
+                              value={filters.location}
+                              onValueChange={(value) =>
+                                setFilters((prev) => ({
+                                  ...prev,
+                                  location: value,
+                                }))
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Localisation" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">
+                                  Toutes les localisations
+                                </SelectItem>
+                                {locationOptions.map((location) => (
+                                  <SelectItem key={location} value={location}>
+                                    {location}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Caracteristiques
+                        </p>
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label>Carburant</Label>
+                            <Select
+                              value={filters.fuelType}
+                              onValueChange={(value) =>
+                                setFilters((prev) => ({
+                                  ...prev,
+                                  fuelType: value as FuelType | "all",
+                                }))
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Carburant" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">
+                                  Tous les carburants
+                                </SelectItem>
+                                <SelectItem value="essence">Essence</SelectItem>
+                                <SelectItem value="diesel">Diesel</SelectItem>
+                                <SelectItem value="hybride">Hybride</SelectItem>
+                                <SelectItem value="electrique">
+                                  Électrique
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Transmission</Label>
+                            <Select
+                              value={filters.transmission}
+                              onValueChange={(value) =>
+                                setFilters((prev) => ({
+                                  ...prev,
+                                  transmission: value as Transmission | "all",
+                                }))
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Transmission" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">Toutes</SelectItem>
+                                <SelectItem value="manuelle">
+                                  Manuelle
+                                </SelectItem>
+                                <SelectItem value="automatique">
+                                  Automatique
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Plages
+                        </p>
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            <Label>Année</Label>
+                            <div className="grid grid-cols-2 gap-3">
+                              <Input
+                                placeholder="Min"
+                                type="number"
+                                value={filters.minYear}
+                                onChange={(e) =>
+                                  setFilters((prev) => ({
+                                    ...prev,
+                                    minYear: e.target.value,
+                                  }))
+                                }
+                              />
+                              <Input
+                                placeholder="Max"
+                                type="number"
+                                value={filters.maxYear}
+                                onChange={(e) =>
+                                  setFilters((prev) => ({
+                                    ...prev,
+                                    maxYear: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Prix</Label>
+                            <div className="grid grid-cols-2 gap-3">
+                              <Input
+                                placeholder="Min"
+                                type="number"
+                                value={filters.minPrice}
+                                onChange={(e) =>
+                                  setFilters((prev) => ({
+                                    ...prev,
+                                    minPrice: e.target.value,
+                                  }))
+                                }
+                              />
+                              <Input
+                                placeholder="Max"
+                                type="number"
+                                value={filters.maxPrice}
+                                onChange={(e) =>
+                                  setFilters((prev) => ({
+                                    ...prev,
+                                    maxPrice: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() =>
+                            setFilters({
+                              status: "all",
+                              brand: "all",
+                              fuelType: "all",
+                              transmission: "all",
+                              sellerId: "all",
+                              location: "all",
+                              minYear: "",
+                              maxYear: "",
+                              minPrice: "",
+                              maxPrice: "",
+                            })
+                          }
+                        >
+                          Réinitialiser
+                        </Button>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                <Button
+                  type="button"
+                  variant={viewMode === "list" ? "secondary" : "ghost"}
+                  size="icon"
+                  onClick={() => setViewMode("list")}
+                  aria-label="Afficher en liste"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant={viewMode === "grid" ? "secondary" : "ghost"}
+                  size="icon"
+                  onClick={() => setViewMode("grid")}
+                  aria-label="Afficher en grille"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {isLoading ? (
@@ -1336,15 +2031,16 @@ function VehiclesPage() {
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                   <p className="text-sm text-muted-foreground">
-                    Chargement des véhicules...
+                    Chargement des annonces...
                   </p>
                 </div>
               </div>
-            ) : vehicles && vehicles.length > 0 ? (
+            ) : vehicles.length > 0 ? (
+              viewMode === "list" ? (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Véhicule</TableHead>
+                    <TableHead>Annonce</TableHead>
                     <TableHead>Année</TableHead>
                     <TableHead>Prix</TableHead>
                     <TableHead>Coût import</TableHead>
@@ -1394,14 +2090,16 @@ function VehiclesPage() {
                             >
                               Modifier
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onSelect={() => {
-                                setStatusVehicle(vehicle);
-                                setNewStatus(vehicle.status);
-                              }}
-                            >
-                              Changer le statut
-                            </DropdownMenuItem>
+                            {canChangeStatus && (
+                              <DropdownMenuItem
+                                onSelect={() => {
+                                  setStatusVehicle(vehicle);
+                                  setNewStatus(vehicle.status);
+                                }}
+                              >
+                                Changer le statut
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive"
@@ -1416,12 +2114,147 @@ function VehiclesPage() {
                   ))}
                 </TableBody>
               </Table>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {vehicles.map((vehicle) => (
+                    <Card key={vehicle.id} className="overflow-hidden">
+                      <div className="aspect-[4/3] bg-muted/40">
+                        {vehicle.images && vehicle.images.length > 0 ? (
+                          <img
+                            src={vehicle.images[0]}
+                            alt={`${vehicle.brand} ${vehicle.model}`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                            Aucune image
+                          </div>
+                        )}
+                      </div>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold">
+                              {vehicle.brand} {vehicle.model}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {vehicle.year} ·{" "}
+                              {vehicle.mileage.toLocaleString("fr-FR")} km
+                            </p>
+                          </div>
+                          {getStatusBadge(vehicle.status)}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Prix</p>
+                            <p className="font-semibold">
+                              {vehicle.price.toLocaleString("fr-FR")} €
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">
+                              Coût import
+                            </p>
+                            <p className="font-semibold text-muted-foreground">
+                              {vehicle.importCost.toLocaleString("fr-FR")} €
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={deleteMutation.isPending}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onSelect={() => setSelectedVehicle(vehicle)}
+                              >
+                                Voir les détails
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => setEditingVehicle(vehicle)}
+                              >
+                                Modifier
+                              </DropdownMenuItem>
+                            {canChangeStatus && (
+                              <DropdownMenuItem
+                                onSelect={() => {
+                                  setStatusVehicle(vehicle);
+                                  setNewStatus(vehicle.status);
+                                }}
+                              >
+                                Changer le statut
+                              </DropdownMenuItem>
+                            )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onSelect={() => setDeleteVehicle(vehicle)}
+                              >
+                                Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )
             ) : (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">Aucun véhicule trouvé</p>
+                <p className="text-muted-foreground">Aucune annonce trouvée</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Ajoutez votre premier véhicule au catalogue
+                  Ajoutez votre première annonce au catalogue
                 </p>
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-end px-2 py-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Précédent
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Suivant
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
@@ -1450,7 +2283,7 @@ function VehiclesPage() {
                 </span>
               </DialogTitle>
               <DialogDescription>
-                Détails complets du véhicule sélectionné.
+                Détails complets de l'annonce sélectionnée.
               </DialogDescription>
             </DialogHeader>
 
@@ -1586,6 +2419,27 @@ function VehiclesPage() {
                     </div>
                   )}
 
+                {technicalSpecs.length > 0 && (
+                  <div className="space-y-2 rounded-lg border p-4">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Fiche technique
+                    </p>
+                    <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+                      {technicalSpecs.map((spec) => (
+                        <div
+                          key={spec.label}
+                          className="rounded border px-3 py-2"
+                        >
+                          <p className="text-xs text-muted-foreground">
+                            {spec.label}
+                          </p>
+                          <p className="font-medium">{spec.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {selectedVehicle.technicalData &&
                   Object.keys(selectedVehicle.technicalData).length > 0 && (
                     <div className="space-y-2 rounded-lg border p-4">
@@ -1597,12 +2451,12 @@ function VehiclesPage() {
                           ([label, value]) => (
                             <div
                               key={label}
-                              className="flex items-center justify-between rounded border px-3 py-2"
+                              className="rounded border px-3 py-2"
                             >
-                              <span className="text-muted-foreground">
-                                {label}
-                              </span>
-                              <span className="font-medium">{value}</span>
+                              <p className="text-xs text-muted-foreground">
+                                {formatTechnicalLabel(label)}
+                              </p>
+                              <p className="font-medium">{value}</p>
                             </div>
                           )
                         )}
@@ -1656,13 +2510,13 @@ function VehiclesPage() {
         {editingVehicle && (
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>Modifier le véhicule</DialogTitle>
+              <DialogTitle>Modifier l'annonce</DialogTitle>
               <DialogDescription>
                 Mettez à jour les informations de {editingVehicle.brand}{" "}
                 {editingVehicle.model}.
               </DialogDescription>
             </DialogHeader>
-            <EditVehicleForm
+            <EditAnnonceForm
               vehicle={editingVehicle}
               onClose={() => setEditingVehicle(null)}
             />
@@ -1701,7 +2555,6 @@ function VehiclesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="available">Disponible</SelectItem>
-                    <SelectItem value="reserved">Réservé</SelectItem>
                     <SelectItem value="sold">Vendu</SelectItem>
                   </SelectContent>
                 </Select>
@@ -1745,7 +2598,7 @@ function VehiclesPage() {
         {deleteVehicle && (
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Supprimer le véhicule</DialogTitle>
+              <DialogTitle>Supprimer l'annonce</DialogTitle>
               <DialogDescription>
                 Cette action est irréversible. Confirmez la suppression de{" "}
                 <span className="font-semibold">
@@ -1801,6 +2654,6 @@ function VehiclesPage() {
   );
 }
 
-export const Route = createFileRoute("/vehicles")({
-  component: VehiclesPage,
+export const Route = createFileRoute("/listings")({
+  component: ListingsPage,
 });

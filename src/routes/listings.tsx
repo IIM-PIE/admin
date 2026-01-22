@@ -186,6 +186,20 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
       return;
     }
 
+    const yearValue = parseRequiredInt(formData.year);
+    const priceValue = parseRequiredFloat(formData.price);
+    const importCostValue = parseOptionalFloat(formData.importCost);
+    const mileageValue = parseRequiredFloat(formData.mileage);
+
+    if (
+      yearValue === undefined ||
+      priceValue === undefined ||
+      mileageValue === undefined
+    ) {
+      toast.error("Veuillez renseigner des valeurs numériques valides");
+      return;
+    }
+
     const vehicleData = {
       ...formData,
       year: yearValue,

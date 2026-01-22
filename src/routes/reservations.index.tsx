@@ -57,7 +57,7 @@ function ReservationsPage() {
                     <TableRow key={listing.id}>
                       <TableCell className="font-medium">
                         <Link
-                          to="/quotes/$id"
+                          to="/reservations/$id"
                           params={{ id: listing.id }}
                           className="hover:underline"
                         >
@@ -90,6 +90,6 @@ function ReservationsPage() {
   )
 }
 
-export const Route = createFileRoute('/quotes/')({
+export const Route = createFileRoute('/reservations/')({
   component: ReservationsPage,
 })

@@ -130,7 +130,7 @@ function ReservationDetailPage() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/quotes">Réservations</Link>
+                <Link to="/reservations">Réservations</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -509,6 +509,6 @@ function ReservationDetailPage() {
   )
 }
 
-export const Route = createFileRoute('/quotes/$id')({
+export const Route = createFileRoute('/reservations/$id')({
   component: ReservationDetailPage,
 })

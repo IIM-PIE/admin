@@ -12,7 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as SellersRouteImport } from './routes/sellers'
-import { Route as QuotesRouteImport } from './routes/quotes'
+import { Route as ReservationsRouteImport } from './routes/reservations'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListingsRouteImport } from './routes/listings'
@@ -21,8 +21,8 @@ import { Route as ExternalListingsRouteImport } from './routes/external-listings
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as ConversationsRouteImport } from './routes/conversations'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as QuotesIndexRouteImport } from './routes/quotes.index'
-import { Route as QuotesIdRouteImport } from './routes/quotes.$id'
+import { Route as ReservationsIndexRouteImport } from './routes/reservations.index'
+import { Route as ReservationsIdRouteImport } from './routes/reservations.$id'
 
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
@@ -39,9 +39,9 @@ const SellersRoute = SellersRouteImport.update({
   path: '/sellers',
   getParentRoute: () => rootRouteImport,
 } as any)
-const QuotesRoute = QuotesRouteImport.update({
-  id: '/quotes',
-  path: '/quotes',
+const ReservationsRoute = ReservationsRouteImport.update({
+  id: '/reservations',
+  path: '/reservations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -84,15 +84,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const QuotesIndexRoute = QuotesIndexRouteImport.update({
+const ReservationsIndexRoute = ReservationsIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => QuotesRoute,
+  getParentRoute: () => ReservationsRoute,
 } as any)
-const QuotesIdRoute = QuotesIdRouteImport.update({
+const ReservationsIdRoute = ReservationsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => QuotesRoute,
+  getParentRoute: () => ReservationsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -104,12 +104,12 @@ export interface FileRoutesByFullPath {
   '/listings': typeof ListingsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
-  '/quotes': typeof QuotesRouteWithChildren
+  '/reservations': typeof ReservationsRouteWithChildren
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/quotes/$id': typeof QuotesIdRoute
-  '/quotes/': typeof QuotesIndexRoute
+  '/reservations/$id': typeof ReservationsIdRoute
+  '/reservations/': typeof ReservationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -123,8 +123,8 @@ export interface FileRoutesByTo {
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/quotes/$id': typeof QuotesIdRoute
-  '/quotes': typeof QuotesIndexRoute
+  '/reservations/$id': typeof ReservationsIdRoute
+  '/reservations': typeof ReservationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -136,12 +136,12 @@ export interface FileRoutesById {
   '/listings': typeof ListingsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
-  '/quotes': typeof QuotesRouteWithChildren
+  '/reservations': typeof ReservationsRouteWithChildren
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/quotes/$id': typeof QuotesIdRoute
-  '/quotes/': typeof QuotesIndexRoute
+  '/reservations/$id': typeof ReservationsIdRoute
+  '/reservations/': typeof ReservationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -154,12 +154,12 @@ export interface FileRouteTypes {
     | '/listings'
     | '/login'
     | '/notifications'
-    | '/quotes'
+    | '/reservations'
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/quotes/$id'
-    | '/quotes/'
+    | '/reservations/$id'
+    | '/reservations/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -173,8 +173,8 @@ export interface FileRouteTypes {
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/quotes/$id'
-    | '/quotes'
+    | '/reservations/$id'
+    | '/reservations'
   id:
     | '__root__'
     | '/'
@@ -185,12 +185,12 @@ export interface FileRouteTypes {
     | '/listings'
     | '/login'
     | '/notifications'
-    | '/quotes'
+    | '/reservations'
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/quotes/$id'
-    | '/quotes/'
+    | '/reservations/$id'
+    | '/reservations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -202,7 +202,7 @@ export interface RootRouteChildren {
   ListingsRoute: typeof ListingsRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
-  QuotesRoute: typeof QuotesRouteWithChildren
+  ReservationsRoute: typeof ReservationsRouteWithChildren
   SellersRoute: typeof SellersRoute
   StatisticsRoute: typeof StatisticsRoute
   UsersRoute: typeof UsersRoute
@@ -231,11 +231,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SellersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/quotes': {
-      id: '/quotes'
-      path: '/quotes'
-      fullPath: '/quotes'
-      preLoaderRoute: typeof QuotesRouteImport
+    '/reservations': {
+      id: '/reservations'
+      path: '/reservations'
+      fullPath: '/reservations'
+      preLoaderRoute: typeof ReservationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -294,35 +294,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/quotes/': {
-      id: '/quotes/'
+    '/reservations/': {
+      id: '/reservations/'
       path: '/'
-      fullPath: '/quotes/'
-      preLoaderRoute: typeof QuotesIndexRouteImport
-      parentRoute: typeof QuotesRoute
+      fullPath: '/reservations/'
+      preLoaderRoute: typeof ReservationsIndexRouteImport
+      parentRoute: typeof ReservationsRoute
     }
-    '/quotes/$id': {
-      id: '/quotes/$id'
+    '/reservations/$id': {
+      id: '/reservations/$id'
       path: '/$id'
-      fullPath: '/quotes/$id'
-      preLoaderRoute: typeof QuotesIdRouteImport
-      parentRoute: typeof QuotesRoute
+      fullPath: '/reservations/$id'
+      preLoaderRoute: typeof ReservationsIdRouteImport
+      parentRoute: typeof ReservationsRoute
     }
   }
 }
 
-interface QuotesRouteChildren {
-  QuotesIdRoute: typeof QuotesIdRoute
-  QuotesIndexRoute: typeof QuotesIndexRoute
+interface ReservationsRouteChildren {
+  ReservationsIdRoute: typeof ReservationsIdRoute
+  ReservationsIndexRoute: typeof ReservationsIndexRoute
 }
 
-const QuotesRouteChildren: QuotesRouteChildren = {
-  QuotesIdRoute: QuotesIdRoute,
-  QuotesIndexRoute: QuotesIndexRoute,
+const ReservationsRouteChildren: ReservationsRouteChildren = {
+  ReservationsIdRoute: ReservationsIdRoute,
+  ReservationsIndexRoute: ReservationsIndexRoute,
 }
 
-const QuotesRouteWithChildren =
-  QuotesRoute._addFileChildren(QuotesRouteChildren)
+const ReservationsRouteWithChildren = ReservationsRoute._addFileChildren(
+  ReservationsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -333,7 +334,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListingsRoute: ListingsRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
-  QuotesRoute: QuotesRouteWithChildren,
+  ReservationsRoute: ReservationsRouteWithChildren,
   SellersRoute: SellersRoute,
   StatisticsRoute: StatisticsRoute,
   UsersRoute: UsersRoute,

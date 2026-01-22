@@ -3,6 +3,7 @@ import type { Conversation, Message, PaginatedResponse, PaginationParams } from 
 
 interface ConversationFilters extends PaginationParams {
   userId?: string
+  listingId?: string
   status?: string
 }
 
@@ -40,6 +41,18 @@ export const conversationsService = {
 
   deleteConversation: async (id: string): Promise<void> => {
     await apiClient.delete(`/conversations/${id}`)
+  },
+
+  // Récupérer les conversations d'un listing
+  getListingConversations: async (listingId: string, userId?: string): Promise<Conversation[]> => {
+    const { data } = await apiClient.get<Conversation[] | PaginatedResponse<Conversation>>(
+      `/conversations/listing/${listingId}`,
+      { params: userId ? { userId } : {} }
+    )
+    const payload: any = (data as any)?.data ?? data
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload?.data)) return payload.data
+    return []
   },
 
   // Messages

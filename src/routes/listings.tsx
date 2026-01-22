@@ -51,6 +51,8 @@ import {
   LayoutGrid,
   ChevronLeft,
   ChevronRight,
+  MessageSquare,
+  Send,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -62,7 +64,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { listingsService } from "@/services/listings.service";
 import { sellersService } from "@/services/sellers.service";
-import type { FuelType, Transmission, VehicleStatus, Vehicle } from "@/types";
+import { conversationsService } from "@/services/conversations.service";
+import type { FuelType, Transmission, VehicleStatus, Vehicle, Conversation } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -1409,6 +1412,196 @@ function EditAnnonceForm({
   );
 }
 
+// Composant pour afficher et gérer les conversations d'une annonce
+function ListingConversationsDialog({ 
+  listing, 
+  onClose 
+}: { 
+  listing: Vehicle
+  onClose: () => void 
+}) {
+  const queryClient = useQueryClient()
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
+  const [messageContent, setMessageContent] = useState("")
+
+  // Récupérer les conversations du listing
+  const { data: conversations = [], isLoading } = useQuery({
+    queryKey: ['conversations', 'listing', listing.id],
+    queryFn: () => conversationsService.getListingConversations(listing.id),
+  })
+
+  // Récupérer les messages de la conversation sélectionnée
+  const { data: messages = [] } = useQuery({
+    queryKey: ['messages', selectedConversation?.id],
+    queryFn: () => conversationsService.getMessages(selectedConversation!.id),
+    enabled: !!selectedConversation,
+  })
+
+  // Mutation pour envoyer un message
+  const sendMessageMutation = useMutation({
+    mutationFn: (content: string) => 
+      conversationsService.sendMessage({
+        conversationId: selectedConversation!.id,
+        content,
+      }),
+    onSuccess: () => {
+      setMessageContent("")
+      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation?.id] })
+      queryClient.invalidateQueries({ queryKey: ['conversations', 'listing', listing.id] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Erreur lors de l'envoi du message")
+    },
+  })
+
+  return (
+    <Dialog open={!!listing} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-4xl h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>
+            Conversations - {listing.brand} {listing.model}
+          </DialogTitle>
+          <DialogDescription>
+            Gérez les conversations liées à cette annonce
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 grid grid-cols-[300px,1fr] gap-4 overflow-hidden">
+          {/* Liste des conversations */}
+          <Card className="overflow-hidden flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">
+                Conversations ({conversations.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto p-2">
+              {isLoading ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Chargement...
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Aucune conversation
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {conversations.map((conv) => (
+                    <button
+                      key={conv.id}
+                      onClick={() => setSelectedConversation(conv)}
+                      className={`w-full text-left p-3 rounded-lg border transition ${
+                        selectedConversation?.id === conv.id
+                          ? 'bg-primary/10 border-primary'
+                          : 'hover:bg-muted'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium text-sm">
+                          {conv.user?.name || 'Utilisateur'}
+                        </p>
+                        {conv.unreadCount > 0 && (
+                          <Badge variant="destructive" className="text-xs">
+                            {conv.unreadCount}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {conv.lastMessageAt 
+                          ? new Date(conv.lastMessageAt).toLocaleDateString('fr-FR')
+                          : new Date(conv.createdAt).toLocaleDateString('fr-FR')}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Messages de la conversation sélectionnée */}
+          <Card className="flex flex-col overflow-hidden">
+            {selectedConversation ? (
+              <>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">
+                    Conversation avec {selectedConversation.user?.name}
+                  </CardTitle>
+                  <CardDescription>
+                    {selectedConversation.user?.email}
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent className="flex-1 overflow-y-auto p-4">
+                  <div className="space-y-4">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${
+                          message.senderType === 'admin' ? 'justify-end' : 'justify-start'
+                        }`}
+                      >
+                        <div
+                          className={`max-w-[70%] rounded-lg p-3 ${
+                            message.senderType === 'admin'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted'
+                          }`}
+                        >
+                          <p className="text-sm">{message.content}</p>
+                          <p className={`text-xs mt-1 ${
+                            message.senderType === 'admin'
+                              ? 'text-primary-foreground/70'
+                              : 'text-muted-foreground'
+                          }`}>
+                            {new Date(message.createdAt).toLocaleString('fr-FR')}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+
+                <div className="p-4 border-t">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      if (messageContent.trim()) {
+                        sendMessageMutation.mutate(messageContent.trim())
+                      }
+                    }}
+                    className="flex gap-2"
+                  >
+                    <Textarea
+                      value={messageContent}
+                      onChange={(e) => setMessageContent(e.target.value)}
+                      placeholder="Tapez votre message..."
+                      className="min-h-[60px] flex-1"
+                      disabled={sendMessageMutation.isPending}
+                    />
+                    <Button
+                      type="submit"
+                      disabled={!messageContent.trim() || sendMessageMutation.isPending}
+                      size="icon"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <CardContent className="flex-1 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>Sélectionnez une conversation</p>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function ListingsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -1418,6 +1611,7 @@ function ListingsPage() {
   const [statusVehicle, setStatusVehicle] = useState<Vehicle | null>(null);
   const [newStatus, setNewStatus] = useState<VehicleStatus>("available");
   const [deleteVehicle, setDeleteVehicle] = useState<Vehicle | null>(null);
+  const [selectedListingForConversations, setSelectedListingForConversations] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -2086,6 +2280,13 @@ function ListingsPage() {
                               Voir les détails
                             </DropdownMenuItem>
                             <DropdownMenuItem
+                              onSelect={() => setSelectedListingForConversations(vehicle)}
+                              disabled={!vehicle._count?.conversations || vehicle._count.conversations === 0}
+                              className={!vehicle._count?.conversations || vehicle._count.conversations === 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                            >
+                              Voir les conversations
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onSelect={() => setEditingVehicle(vehicle)}
                             >
                               Modifier
@@ -2180,6 +2381,13 @@ function ListingsPage() {
                                 onSelect={() => setSelectedVehicle(vehicle)}
                               >
                                 Voir les détails
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => setSelectedListingForConversations(vehicle)}
+                                disabled={!vehicle._count?.conversations || vehicle._count.conversations === 0}
+                                className={!vehicle._count?.conversations || vehicle._count.conversations === 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                              >
+                                Voir les conversations
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={() => setEditingVehicle(vehicle)}
@@ -2650,6 +2858,14 @@ function ListingsPage() {
           </DialogContent>
         )}
       </Dialog>
+
+      {/* Dialog pour les conversations d'une annonce */}
+      {selectedListingForConversations && (
+        <ListingConversationsDialog
+          listing={selectedListingForConversations}
+          onClose={() => setSelectedListingForConversations(null)}
+        />
+      )}
     </DashboardLayout>
   );
 }

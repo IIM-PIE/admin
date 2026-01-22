@@ -69,6 +69,9 @@ export interface Vehicle {
   updatedAt: string
   seller?: Seller
   reservedByUser?: User
+  _count?: {
+    conversations?: number
+  }
 }
 
 // Seller types
@@ -208,6 +211,7 @@ export interface Conversation {
   id: string
   userId: string
   importId?: string
+  listingId?: string
   vehicleDescription?: string
   status: 'active' | 'closed'
   unreadCount: number
@@ -215,6 +219,7 @@ export interface Conversation {
   createdAt: string
   updatedAt: string
   user?: User
+  listing?: Vehicle
   messages?: Message[]
 }
 

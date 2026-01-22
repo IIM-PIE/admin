@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -53,8 +53,8 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquare,
-  Send,
   Plus,
+  ExternalLink,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -68,6 +68,7 @@ import { listingsService } from "@/services/listings.service";
 import { sellersService } from "@/services/sellers.service";
 import { conversationsService } from "@/services/conversations.service";
 import { usersService } from "@/services/users.service";
+import { ConversationMessages } from "@/components/conversations/conversation-messages";
 import type { FuelType, Transmission, VehicleStatus, Vehicle, Conversation } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
@@ -105,7 +106,7 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
     model: "",
     year: String(new Date().getFullYear()),
     price: "",
-    importCost: "",
+    importCost: "1200",
     mileage: "",
     fuelType: "essence" as FuelType,
     transmission: "manuelle" as Transmission,
@@ -1575,38 +1576,13 @@ function ListingConversationsDialog({
   listing: Vehicle
   onClose: () => void 
 }) {
-  const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
-  const [messageContent, setMessageContent] = useState("")
 
   // Récupérer les conversations du listing
   const { data: conversations = [], isLoading } = useQuery({
     queryKey: ['conversations', 'listing', listing.id],
     queryFn: () => conversationsService.getListingConversations(listing.id),
-  })
-
-  // Récupérer les messages de la conversation sélectionnée
-  const { data: messages = [] } = useQuery({
-    queryKey: ['messages', selectedConversation?.id],
-    queryFn: () => conversationsService.getMessages(selectedConversation!.id),
-    enabled: !!selectedConversation,
-  })
-
-  // Mutation pour envoyer un message
-  const sendMessageMutation = useMutation({
-    mutationFn: (content: string) => 
-      conversationsService.sendMessage({
-        conversationId: selectedConversation!.id,
-        content,
-      }),
-    onSuccess: () => {
-      setMessageContent("")
-      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversation?.id] })
-      queryClient.invalidateQueries({ queryKey: ['conversations', 'listing', listing.id] })
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erreur lors de l'envoi du message")
-    },
   })
 
   return (
@@ -1677,70 +1653,39 @@ function ListingConversationsDialog({
             {selectedConversation ? (
               <>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">
-                    Conversation avec {selectedConversation.user?.name}
-                  </CardTitle>
-                  <CardDescription>
-                    {selectedConversation.user?.email}
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base">
+                        Conversation avec {selectedConversation.user?.name}
+                      </CardTitle>
+                      <CardDescription>
+                        {selectedConversation.user?.email}
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        navigate({ 
+                          to: '/conversations', 
+                          search: { conversationId: selectedConversation.id } 
+                        })
+                        onClose()
+                      }}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Voir en détail
+                    </Button>
+                  </div>
                 </CardHeader>
 
-                <CardContent className="flex-1 overflow-y-auto p-4">
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${
-                          message.senderType === 'admin' ? 'justify-end' : 'justify-start'
-                        }`}
-                      >
-                        <div
-                          className={`max-w-[70%] rounded-lg p-3 ${
-                            message.senderType === 'admin'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
-                          }`}
-                        >
-                          <p className="text-sm">{message.content}</p>
-                          <p className={`text-xs mt-1 ${
-                            message.senderType === 'admin'
-                              ? 'text-primary-foreground/70'
-                              : 'text-muted-foreground'
-                          }`}>
-                            {new Date(message.createdAt).toLocaleString('fr-FR')}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <CardContent className="flex-1 overflow-hidden p-4 flex flex-col">
+                  <ConversationMessages 
+                    conversationId={selectedConversation.id}
+                    autoRefresh={true}
+                    refreshInterval={5000}
+                  />
                 </CardContent>
-
-                <div className="p-4 border-t">
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      if (messageContent.trim()) {
-                        sendMessageMutation.mutate(messageContent.trim())
-                      }
-                    }}
-                    className="flex gap-2"
-                  >
-                    <Textarea
-                      value={messageContent}
-                      onChange={(e) => setMessageContent(e.target.value)}
-                      placeholder="Tapez votre message..."
-                      className="min-h-[60px] flex-1"
-                      disabled={sendMessageMutation.isPending}
-                    />
-                    <Button
-                      type="submit"
-                      disabled={!messageContent.trim() || sendMessageMutation.isPending}
-                      size="icon"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </form>
-                </div>
               </>
             ) : (
               <CardContent className="flex-1 flex items-center justify-center">

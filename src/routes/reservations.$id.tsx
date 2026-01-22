@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { listingsService } from '@/services/listings.service'
+import { quotesService } from '@/services/quotes.service'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -49,6 +51,38 @@ function ReservationDetailPage() {
   const [draftTitle, setDraftTitle] = useState('')
   const [draftFile, setDraftFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [isDownloadingQuote, setIsDownloadingQuote] = useState(false)
+
+  const quoteMutation = useMutation({
+    mutationFn: async () => {
+      if (!listing?.reservedByUser?.id) {
+        throw new Error('missing_user')
+      }
+      const quote = await quotesService.requestQuote({
+        userId: listing.reservedByUser.id,
+        vehicleId: listing.id,
+      })
+      const pdfBlob = await quotesService.getQuotePdf(quote.id)
+      return { quote, pdfBlob }
+    },
+    onSuccess: ({ pdfBlob }) => {
+      const url = URL.createObjectURL(pdfBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `devis-${listing?.id ?? 'reservation'}.pdf`
+      link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 60000)
+      setIsDownloadingQuote(false)
+    },
+    onError: (error: any) => {
+      if (error?.message === 'missing_user') {
+        toast.error('Aucun client réservataire pour générer le devis.')
+        return
+      }
+      toast.error('Erreur lors de la génération du devis.')
+      setIsDownloadingQuote(false)
+    },
+  })
 
   useEffect(() => {
     setSelectedImageIndex(0)
@@ -130,7 +164,7 @@ function ReservationDetailPage() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/quotes">Réservations</Link>
+                <Link to="/reservations">Réservations</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -168,6 +202,19 @@ function ReservationDetailPage() {
                 {listing.importCost.toLocaleString('fr-FR')} €
               </p>
             </div>
+            <Button
+              type="button"
+              className="sm:col-span-2"
+              onClick={() => {
+                if (quoteMutation.isPending || isDownloadingQuote) return
+                setIsDownloadingQuote(true)
+                quoteMutation.mutate()
+              }}
+            >
+              {quoteMutation.isPending || isDownloadingQuote
+                ? 'Génération...'
+                : 'Générer un devis'}
+            </Button>
           </div>
         </div>
 
@@ -509,6 +556,6 @@ function ReservationDetailPage() {
   )
 }
 
-export const Route = createFileRoute('/quotes/$id')({
+export const Route = createFileRoute('/reservations/$id')({
   component: ReservationDetailPage,
 })

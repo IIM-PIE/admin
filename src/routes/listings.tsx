@@ -67,6 +67,7 @@ import {
 import { listingsService } from "@/services/listings.service";
 import { sellersService } from "@/services/sellers.service";
 import { conversationsService } from "@/services/conversations.service";
+import { usersService } from "@/services/users.service";
 import type { FuelType, Transmission, VehicleStatus, Vehicle, Conversation } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
@@ -99,6 +100,7 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
 
   const [formData, setFormData] = useState({
     sellerId: "",
+    reservedByUserId: "",
     brand: "",
     model: "",
     year: String(new Date().getFullYear()),
@@ -128,6 +130,14 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
     queryKey: ["sellers"],
     queryFn: () => sellersService.getSellers({ page: 1, limit: 1000 }),
   });
+  const { data: users, isLoading: loadingUsers } = useQuery({
+    queryKey: ["users", { page: 1, limit: 1000 }],
+    queryFn: () => usersService.getUsers({ page: 1, limit: 1000 }),
+  });
+  const customerUsers = useMemo(
+    () => (users || []).filter((user) => user.role === "customer"),
+    [users]
+  );
 
   const createMutation = useMutation({
     mutationFn: listingsService.createListing,
@@ -147,6 +157,18 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     if (!formData.brand || !formData.model || !formData.sellerId) {
       toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+    if (formData.status === "reserved" && !formData.reservedByUserId) {
+      toast.error("Veuillez sélectionner le client ayant réservé l'annonce");
+      return;
+    }
+    if (formData.status === "reserved" && !formData.reservedByUserId) {
+      toast.error("Veuillez sélectionner le client ayant réservé l'annonce");
+      return;
+    }
+    if (formData.status === "reserved" && !formData.reservedByUserId) {
+      toast.error("Veuillez sélectionner le client ayant réservé l'annonce");
       return;
     }
 
@@ -235,7 +257,8 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
     priceValue !== undefined &&
     priceValue > 0 &&
     mileageValue !== undefined &&
-    mileageValue >= 0;
+    mileageValue >= 0 &&
+    (formData.status !== "reserved" || !!formData.reservedByUserId);
 
   return (
     <form
@@ -625,7 +648,11 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
         <Select
           value={formData.status}
           onValueChange={(value: VehicleStatus) =>
-            setFormData({ ...formData, status: value })
+            setFormData({
+              ...formData,
+              status: value,
+              reservedByUserId: value === "reserved" ? formData.reservedByUserId : "",
+            })
           }
           disabled={createMutation.isPending}
         >
@@ -639,6 +666,38 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
           </SelectContent>
         </Select>
       </div>
+
+      {formData.status === "reserved" && (
+        <div className="space-y-2">
+          <Label htmlFor="reservedByUserId">
+            Client réservé <span className="text-destructive">*</span>
+          </Label>
+          <Select
+            value={formData.reservedByUserId}
+            onValueChange={(value: string) =>
+              setFormData({ ...formData, reservedByUserId: value })
+            }
+            disabled={createMutation.isPending || loadingUsers}
+          >
+            <SelectTrigger id="reservedByUserId">
+              <SelectValue placeholder="Sélectionner un client" />
+            </SelectTrigger>
+            <SelectContent>
+              {customerUsers.length > 0 ? (
+                customerUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name} ({user.email})
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="no-customers" disabled>
+                  Aucun client disponible
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Description */}
       <div className="space-y-2">
@@ -775,6 +834,7 @@ function EditAnnonceForm({
 
   const [formData, setFormData] = useState({
     sellerId: vehicle.sellerId || "",
+    reservedByUserId: vehicle.reservedByUserId || "",
     brand: vehicle.brand || "",
     model: vehicle.model || "",
     year: vehicle.year?.toString() || "",
@@ -805,12 +865,21 @@ function EditAnnonceForm({
     queryKey: ["sellers"],
     queryFn: () => sellersService.getSellers({ page: 1, limit: 1000 }),
   });
+  const { data: editUsers, isLoading: loadingEditUsers } = useQuery({
+    queryKey: ["users", { page: 1, limit: 1000 }],
+    queryFn: () => usersService.getUsers({ page: 1, limit: 1000 }),
+  });
+  const editCustomerUsers = useMemo(
+    () => (editUsers || []).filter((user) => user.role === "customer"),
+    [editUsers]
+  );
 
   useEffect(() => {
     setEquipment(vehicle.equipment || []);
     setImages(vehicle.images || []);
     setFormData({
       sellerId: vehicle.sellerId || "",
+      reservedByUserId: vehicle.reservedByUserId || "",
       brand: vehicle.brand || "",
       model: vehicle.model || "",
       year: vehicle.year?.toString() || "",
@@ -946,7 +1015,8 @@ function EditAnnonceForm({
     priceValue !== undefined &&
     priceValue > 0 &&
     mileageValue !== undefined &&
-    mileageValue >= 0;
+    mileageValue >= 0 &&
+    (formData.status !== "reserved" || !!formData.reservedByUserId);
 
   return (
     <form
@@ -1333,7 +1403,11 @@ function EditAnnonceForm({
         <Select
           value={formData.status}
           onValueChange={(value: VehicleStatus) =>
-            setFormData({ ...formData, status: value })
+            setFormData({
+              ...formData,
+              status: value,
+              reservedByUserId: value === "reserved" ? formData.reservedByUserId : "",
+            })
           }
           disabled={updateMutation.isPending}
         >
@@ -1347,6 +1421,38 @@ function EditAnnonceForm({
           </SelectContent>
         </Select>
       </div>
+
+      {formData.status === "reserved" && (
+        <div className="space-y-2">
+          <Label htmlFor="reservedByUserId_edit">
+            Client réservé <span className="text-destructive">*</span>
+          </Label>
+          <Select
+            value={formData.reservedByUserId}
+            onValueChange={(value: string) =>
+              setFormData({ ...formData, reservedByUserId: value })
+            }
+            disabled={updateMutation.isPending || loadingEditUsers}
+          >
+            <SelectTrigger id="reservedByUserId_edit">
+              <SelectValue placeholder="Sélectionner un client" />
+            </SelectTrigger>
+            <SelectContent>
+              {editCustomerUsers.length > 0 ? (
+                editCustomerUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name} ({user.email})
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="no-customers" disabled>
+                  Aucun client disponible
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Description */}
       <div className="space-y-2">
@@ -1667,6 +1773,7 @@ function ListingsPage() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [statusVehicle, setStatusVehicle] = useState<Vehicle | null>(null);
   const [newStatus, setNewStatus] = useState<VehicleStatus>("available");
+  const [statusReservedByUserId, setStatusReservedByUserId] = useState("");
   const [deleteVehicle, setDeleteVehicle] = useState<Vehicle | null>(null);
   const [selectedListingForConversations, setSelectedListingForConversations] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -1702,6 +1809,15 @@ function ListingsPage() {
     minPrice: "",
     maxPrice: "",
   });
+
+  const { data: users } = useQuery({
+    queryKey: ["users", { page: 1, limit: 1000 }],
+    queryFn: () => usersService.getUsers({ page: 1, limit: 1000 }),
+  });
+  const customerUsers = useMemo(
+    () => (users || []).filter((user) => user.role === "customer"),
+    [users]
+  );
 
   useEffect(() => {
     localStorage.setItem("listings_view_mode", viewMode);
@@ -1855,12 +1971,20 @@ function ListingsPage() {
   };
 
   const statusMutation = useMutation({
-    mutationFn: (payload: { id: string; status: VehicleStatus }) =>
-      listingsService.updateListing(payload.id, { status: payload.status }),
+    mutationFn: (payload: {
+      id: string;
+      status: VehicleStatus;
+      reservedByUserId?: string;
+    }) =>
+      listingsService.updateListing(payload.id, {
+        status: payload.status,
+        reservedByUserId: payload.reservedByUserId,
+      }),
     onSuccess: () => {
       toast.success("Statut mis à jour");
       queryClient.invalidateQueries({ queryKey: ["listings"] });
       setStatusVehicle(null);
+      setStatusReservedByUserId("");
     },
     onError: (error: any) => {
       toast.error(
@@ -2352,6 +2476,9 @@ function ListingsPage() {
                                 onSelect={() => {
                                   setStatusVehicle(vehicle);
                                   setNewStatus(vehicle.status);
+                                  setStatusReservedByUserId(
+                                    vehicle.reservedByUserId || ""
+                                  );
                                 }}
                               >
                                 Changer le statut
@@ -2455,6 +2582,9 @@ function ListingsPage() {
                                 onSelect={() => {
                                   setStatusVehicle(vehicle);
                                   setNewStatus(vehicle.status);
+                                  setStatusReservedByUserId(
+                                    vehicle.reservedByUserId || ""
+                                  );
                                 }}
                               >
                                 Changer le statut
@@ -2793,6 +2923,7 @@ function ListingsPage() {
         onOpenChange={(open) => {
           if (!open) {
             setStatusVehicle(null);
+            setStatusReservedByUserId("");
           }
         }}
       >
@@ -2811,7 +2942,12 @@ function ListingsPage() {
                 <Label htmlFor="status_select">Statut</Label>
                 <Select
                   value={newStatus}
-                  onValueChange={(value: VehicleStatus) => setNewStatus(value)}
+                  onValueChange={(value: VehicleStatus) => {
+                    setNewStatus(value);
+                    if (value !== "reserved") {
+                      setStatusReservedByUserId("");
+                    }
+                  }}
                   disabled={statusMutation.isPending}
                 >
                   <SelectTrigger id="status_select">
@@ -2819,10 +2955,43 @@ function ListingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="available">Disponible</SelectItem>
+                    <SelectItem value="reserved">Réservé</SelectItem>
                     <SelectItem value="sold">Vendu</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {newStatus === "reserved" && (
+                <div className="space-y-2">
+                  <Label htmlFor="status_reserved_user">
+                    Client réservé <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={statusReservedByUserId}
+                    onValueChange={(value: string) =>
+                      setStatusReservedByUserId(value)
+                    }
+                    disabled={statusMutation.isPending}
+                  >
+                    <SelectTrigger id="status_reserved_user">
+                      <SelectValue placeholder="Sélectionner un client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customerUsers.length > 0 ? (
+                        customerUsers.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name} ({user.email})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-customers" disabled>
+                          Aucun client disponible
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="flex justify-end gap-2">
                 <Button
@@ -2835,12 +3004,25 @@ function ListingsPage() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    if (
+                      newStatus === "reserved" &&
+                      !statusReservedByUserId
+                    ) {
+                      toast.error(
+                        "Veuillez sélectionner le client ayant réservé l'annonce"
+                      );
+                      return;
+                    }
                     statusMutation.mutate({
                       id: statusVehicle.id,
                       status: newStatus,
-                    })
-                  }
+                      reservedByUserId:
+                        newStatus === "reserved"
+                          ? statusReservedByUserId
+                          : undefined,
+                    });
+                  }}
                   disabled={statusMutation.isPending}
                 >
                   {statusMutation.isPending ? "Mise à jour..." : "Enregistrer"}

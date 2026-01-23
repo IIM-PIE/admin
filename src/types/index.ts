@@ -179,7 +179,8 @@ export type DocumentStatus = 'pending' | 'validated' | 'rejected'
 
 export interface Document {
   id: string
-  importId: string
+  importId?: string | null
+  listingId?: string | null
   userId: string
   name: string
   type: DocumentType

@@ -18,6 +18,8 @@ import {
 
 interface ListingDocumentsProps {
   listingId: string
+  vehicleStatus?: 'available' | 'reserved' | 'sold'
+  compact?: boolean // Pour un affichage plus compact dans les modals
 }
 
 const getStatusBadge = (status: string) => {
@@ -49,9 +51,10 @@ const getTypeLabel = (type: string) => {
   return labels[type] || type
 }
 
-export function ListingDocuments({ listingId }: ListingDocumentsProps) {
+export function ListingDocuments({ listingId, vehicleStatus, compact = false }: ListingDocumentsProps) {
   const queryClient = useQueryClient()
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const isReserved = vehicleStatus === 'reserved'
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ['documents', 'listing', listingId],
@@ -91,6 +94,247 @@ export function ListingDocuments({ listingId }: ListingDocumentsProps) {
     }
   }
 
+  // Séparer les documents par catégorie
+  const userDocuments = documents.filter((doc) => doc.category === 'user_uploaded')
+  const adminDocuments = documents.filter((doc) => doc.category === 'admin_provided')
+
+  const renderDocumentList = (docs: typeof documents) => {
+    if (docs.length === 0) {
+      return (
+        <div className="text-center py-3 text-muted-foreground">
+          <p className="text-xs">Aucun document pour le moment.</p>
+        </div>
+      )
+    }
+
+    if (compact) {
+      // Affichage compact pour les modals
+      return (
+        <div className="space-y-2">
+          {docs.map((document) => (
+            <div
+              key={document.id}
+              className="flex items-center justify-between p-2 rounded-md border bg-muted/30 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-xs truncate">{document.name}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[10px] text-muted-foreground">
+                      {getTypeLabel(document.type)}
+                    </span>
+                    {document.fileSize && (
+                      <span className="text-[10px] text-muted-foreground">
+                        · {(document.fileSize / 1024).toFixed(1)} KB
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="scale-75 origin-right">
+                  {getStatusBadge(document.status)}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => handleDownload(document.id)}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </Button>
+                {document.status === 'pending' && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => validateMutation.mutate(document.id)}
+                      disabled={validateMutation.isPending}
+                    >
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => rejectMutation.mutate(document.id)}
+                      disabled={rejectMutation.isPending}
+                    >
+                      <X className="h-3.5 w-3.5 text-red-600" />
+                    </Button>
+                  </>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    if (confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
+                      deleteMutation.mutate(document.id)
+                    }
+                  }}
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    // Affichage normal
+    return (
+      <div className="space-y-2.5">
+        {docs.map((document) => (
+          <div
+            key={document.id}
+            className="flex items-center justify-between p-2.5 rounded-lg border hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">{document.name}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs text-muted-foreground">
+                    {getTypeLabel(document.type)}
+                  </span>
+                  {document.fileSize && (
+                    <span className="text-xs text-muted-foreground">
+                      · {(document.fileSize / 1024).toFixed(1)} KB
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {getStatusBadge(document.status)}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleDownload(document.id)}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              {document.status === 'pending' && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => validateMutation.mutate(document.id)}
+                    disabled={validateMutation.isPending}
+                  >
+                    <Check className="h-4 w-4 text-green-600" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => rejectMutation.mutate(document.id)}
+                    disabled={rejectMutation.isPending}
+                  >
+                    <X className="h-4 w-4 text-red-600" />
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  if (confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
+                    deleteMutation.mutate(document.id)
+                  }
+                }}
+                disabled={deleteMutation.isPending}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  // Si l'annonce n'est pas réservée, ne pas afficher les documents
+  if (!isReserved) {
+    return null
+  }
+
+  const content = (
+    <>
+      {isLoading ? (
+        <div className="text-center py-4 text-muted-foreground">
+          <p className="text-sm">Chargement...</p>
+        </div>
+      ) : documents.length === 0 ? (
+        <div className="text-center py-6 text-muted-foreground">
+          <FileText className={`${compact ? 'h-8 w-8' : 'h-10 w-10'} mx-auto mb-2 opacity-50`} />
+          <p className={compact ? 'text-xs' : 'text-sm'}>Aucun document</p>
+        </div>
+      ) : (
+        <div className={compact ? 'space-y-3' : 'grid gap-4 md:grid-cols-2'}>
+          {/* Documents du client */}
+          <div className={compact ? 'space-y-2' : 'rounded-lg border p-4'}>
+            <p className={`${compact ? 'text-[10px]' : 'text-xs'} uppercase tracking-wide text-muted-foreground ${compact ? 'mb-2' : 'mb-3'}`}>
+              Documents du client
+            </p>
+            {renderDocumentList(userDocuments)}
+          </div>
+
+          {/* Documents de l'agent */}
+          <div className={compact ? 'space-y-2' : 'rounded-lg border p-4'}>
+            <p className={`${compact ? 'text-[10px]' : 'text-xs'} uppercase tracking-wide text-muted-foreground ${compact ? 'mb-2' : 'mb-3'}`}>
+              Documents de l'agent
+            </p>
+            {renderDocumentList(adminDocuments)}
+          </div>
+        </div>
+      )}
+    </>
+  )
+
+  if (compact) {
+    // Affichage compact sans Card pour les modals
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium">Documents</p>
+          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="h-7 text-xs">
+                <FileText className="h-3 w-3 mr-1.5" />
+                Ajouter
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ajouter un document</DialogTitle>
+                <DialogDescription>
+                  Uploader un document lié à cette annonce
+                </DialogDescription>
+              </DialogHeader>
+              <DocumentUpload
+                listingId={listingId}
+                onUploadSuccess={() => {
+                  setUploadDialogOpen(false)
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+        {content}
+      </div>
+    )
+  }
+
+  // Affichage normal avec Card
   return (
     <Card>
       <CardHeader>
@@ -121,84 +365,7 @@ export function ListingDocuments({ listingId }: ListingDocumentsProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="text-center py-4 text-muted-foreground">
-            Chargement...
-          </div>
-        ) : documents.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Aucun document</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {documents.map((document) => (
-              <div
-                key={document.id}
-                className="flex items-center justify-between p-3 rounded-lg border"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{document.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-muted-foreground">
-                        {getTypeLabel(document.type)}
-                      </span>
-                      {document.fileSize && (
-                        <span className="text-xs text-muted-foreground">
-                          · {(document.fileSize / 1024).toFixed(1)} KB
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(document.status)}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDownload(document.id)}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                  {document.status === 'pending' && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => validateMutation.mutate(document.id)}
-                        disabled={validateMutation.isPending}
-                      >
-                        <Check className="h-4 w-4 text-green-600" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => rejectMutation.mutate(document.id)}
-                        disabled={rejectMutation.isPending}
-                      >
-                        <X className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      if (confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) {
-                        deleteMutation.mutate(document.id)
-                      }
-                    }}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {content}
       </CardContent>
     </Card>
   )

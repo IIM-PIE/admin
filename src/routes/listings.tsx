@@ -2420,7 +2420,14 @@ function ListingsPage() {
                               Modifier
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onSelect={() => setSelectedListingForDocumentUpload(vehicle)}
+                              disabled={vehicle.status !== 'reserved'}
+                              onSelect={(e) => {
+                                if (vehicle.status !== 'reserved') {
+                                  e.preventDefault()
+                                  return
+                                }
+                                setSelectedListingForDocumentUpload(vehicle)
+                              }}
                             >
                               <FileText className="h-4 w-4 mr-2" />
                               Ajouter un document
@@ -2855,8 +2862,14 @@ function ListingsPage() {
                   </div>
                 )}
 
-                {/* Section Documents */}
-                <ListingDocuments listingId={selectedVehicle.id} />
+                {/* Section Documents - Uniquement si l'annonce est réservée */}
+                {selectedVehicle.status === 'reserved' && (
+                  <ListingDocuments 
+                    listingId={selectedVehicle.id} 
+                    vehicleStatus={selectedVehicle.status}
+                    compact={true}
+                  />
+                )}
               </div>
             </div>
           </DialogContent>
@@ -3076,7 +3089,7 @@ function ListingsPage() {
       )}
 
       {/* Dialog pour uploader un document */}
-      {selectedListingForDocumentUpload && (
+      {selectedListingForDocumentUpload && selectedListingForDocumentUpload.status === 'reserved' && (
         <Dialog
           open={!!selectedListingForDocumentUpload}
           onOpenChange={(open) => {

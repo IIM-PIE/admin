@@ -7,14 +7,6 @@ import { quotesService } from '@/services/quotes.service'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,6 +16,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ListingDocuments } from '@/components/listings/listing-documents'
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -46,11 +39,6 @@ function ReservationDetailPage() {
   })
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [activeTab, setActiveTab] = useState('details')
-  const [agentDocuments, setAgentDocuments] = useState<Array<{ title: string; file: File }>>([])
-  const [isUploadOpen, setIsUploadOpen] = useState(false)
-  const [draftTitle, setDraftTitle] = useState('')
-  const [draftFile, setDraftFile] = useState<File | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
   const [isDownloadingQuote, setIsDownloadingQuote] = useState(false)
 
   const quoteMutation = useMutation({
@@ -224,17 +212,10 @@ function ReservationDetailPage() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <TabsList>
-              <TabsTrigger value="details">Détail</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-            </TabsList>
-            {activeTab === 'documents' && (
-              <Button type="button" onClick={() => setIsUploadOpen(true)}>
-                Déposer un document
-              </Button>
-            )}
-          </div>
+          <TabsList>
+            <TabsTrigger value="details">Détail</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="details">
             <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr] items-start">
@@ -387,170 +368,14 @@ function ReservationDetailPage() {
           </TabsContent>
 
           <TabsContent value="documents">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg border p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Documents du client
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Aucun document pour le moment.
-                </p>
-              </div>
-              <div className="rounded-lg border p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Documents de l'agent
-                </p>
-                <div className="mt-3 space-y-3">
-                  {agentDocuments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      Aucun document pour le moment.
-                    </p>
-                ) : (
-                    <div className="space-y-2">
-                      {agentDocuments.map((doc, index) => (
-                        <div
-                          key={`${doc.file.name}-${index}`}
-                          className="flex items-center justify-between rounded border px-3 py-2 text-sm"
-                        >
-                          <div>
-                            <p className="font-medium">{doc.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {doc.file.name} · {(doc.file.size / 1024).toFixed(1)} Ko
-                            </p>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              setAgentDocuments((prev) =>
-                                prev.filter((_, i) => i !== index)
-                              )
-                            }
-                          >
-                            Retirer
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            {listing && (
+              <ListingDocuments 
+                listingId={listing.id} 
+                vehicleStatus={listing.status}
+              />
+            )}
           </TabsContent>
         </Tabs>
-
-        <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Déposer un document</DialogTitle>
-              <DialogDescription>
-                Ajoutez un titre et choisissez un fichier.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Titre</label>
-                <Input
-                  value={draftTitle}
-                  onChange={(event) => setDraftTitle(event.target.value)}
-                  placeholder="Ex: Devis d'importation"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Fichier</label>
-                <div
-                  className={`flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-8 text-sm transition ${
-                    draftFile
-                      ? 'border-emerald-500 bg-emerald-500/5'
-                      : isDragging
-                        ? 'border-primary bg-primary/5 shadow-sm'
-                        : 'border-muted-foreground/30 bg-muted/20'
-                  }`}
-                  onDragOver={(event) => {
-                    event.preventDefault()
-                    setIsDragging(true)
-                  }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={(event) => {
-                    event.preventDefault()
-                    setIsDragging(false)
-                    const file = event.dataTransfer.files?.[0]
-                    if (file) {
-                      setDraftFile(file)
-                    }
-                  }}
-                >
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <p className="font-medium">
-                      Glissez-déposez un fichier ici
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      ou cliquez pour sélectionner
-                    </p>
-                  </div>
-                  <label
-                    htmlFor="agent-document-file"
-                    className="mt-3 inline-flex cursor-pointer items-center justify-center rounded-md border bg-background px-3 py-1.5 text-sm font-medium transition hover:bg-muted"
-                  >
-                    Choisir un fichier
-                  </label>
-                  <input
-                    id="agent-document-file"
-                    type="file"
-                    className="sr-only"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0] || null
-                      setDraftFile(file)
-                      event.currentTarget.value = ''
-                    }}
-                  />
-                  {draftFile ? (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {draftFile.name} · {(draftFile.size / 1024).toFixed(1)} Ko
-                    </p>
-                  ) : (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Aucun fichier sélectionné
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsUploadOpen(false)
-                    setDraftTitle('')
-                    setDraftFile(null)
-                  }}
-                >
-                  Annuler
-                </Button>
-                <Button
-                  type="button"
-                  disabled={!draftTitle.trim() || !draftFile}
-                  onClick={() => {
-                    if (!draftFile) return
-                    setAgentDocuments((prev) => [
-                      ...prev,
-                      { title: draftTitle.trim(), file: draftFile },
-                    ])
-                    setDraftTitle('')
-                    setDraftFile(null)
-                    setIsUploadOpen(false)
-                  }}
-                >
-                  Ajouter
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   )

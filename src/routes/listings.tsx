@@ -55,6 +55,11 @@ import {
   MessageSquare,
   Plus,
   ExternalLink,
+  FileText,
+  Eye,
+  Pencil,
+  ArrowUpDown,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -69,6 +74,8 @@ import { sellersService } from "@/services/sellers.service";
 import { conversationsService } from "@/services/conversations.service";
 import { usersService } from "@/services/users.service";
 import { ConversationMessages } from "@/components/conversations/conversation-messages";
+import { ListingDocuments } from "@/components/listings/listing-documents";
+import { DocumentUpload } from "@/components/listings/document-upload";
 import type { FuelType, Transmission, VehicleStatus, Vehicle, Conversation } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
@@ -1713,6 +1720,7 @@ function ListingsPage() {
   const [statusReservedByUserId, setStatusReservedByUserId] = useState("");
   const [deleteVehicle, setDeleteVehicle] = useState<Vehicle | null>(null);
   const [selectedListingForConversations, setSelectedListingForConversations] = useState<Vehicle | null>(null);
+  const [selectedListingForDocumentUpload, setSelectedListingForDocumentUpload] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -2394,6 +2402,7 @@ function ListingsPage() {
                             <DropdownMenuItem
                               onSelect={() => setSelectedVehicle(vehicle)}
                             >
+                              <Eye className="h-4 w-4 mr-2" />
                               Voir les détails
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -2401,12 +2410,20 @@ function ListingsPage() {
                               disabled={!vehicle._count?.conversations || vehicle._count.conversations === 0}
                               className={!vehicle._count?.conversations || vehicle._count.conversations === 0 ? 'opacity-50 cursor-not-allowed' : ''}
                             >
+                              <MessageSquare className="h-4 w-4 mr-2" />
                               Voir les conversations
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onSelect={() => setEditingVehicle(vehicle)}
                             >
+                              <Pencil className="h-4 w-4 mr-2" />
                               Modifier
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => setSelectedListingForDocumentUpload(vehicle)}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              Ajouter un document
                             </DropdownMenuItem>
                             {canChangeStatus && (
                               <DropdownMenuItem
@@ -2418,6 +2435,7 @@ function ListingsPage() {
                                   );
                                 }}
                               >
+                                <ArrowUpDown className="h-4 w-4 mr-2" />
                                 Changer le statut
                               </DropdownMenuItem>
                             )}
@@ -2426,6 +2444,7 @@ function ListingsPage() {
                               className="text-destructive"
                               onSelect={() => setDeleteVehicle(vehicle)}
                             >
+                              <Trash2 className="h-4 w-4 mr-2" />
                               Supprimer
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -2500,6 +2519,7 @@ function ListingsPage() {
                               <DropdownMenuItem
                                 onSelect={() => setSelectedVehicle(vehicle)}
                               >
+                                <Eye className="h-4 w-4 mr-2" />
                                 Voir les détails
                               </DropdownMenuItem>
                               <DropdownMenuItem
@@ -2507,12 +2527,20 @@ function ListingsPage() {
                                 disabled={!vehicle._count?.conversations || vehicle._count.conversations === 0}
                                 className={!vehicle._count?.conversations || vehicle._count.conversations === 0 ? 'opacity-50 cursor-not-allowed' : ''}
                               >
+                                <MessageSquare className="h-4 w-4 mr-2" />
                                 Voir les conversations
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={() => setEditingVehicle(vehicle)}
                               >
+                                <Pencil className="h-4 w-4 mr-2" />
                                 Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => setSelectedListingForDocumentUpload(vehicle)}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Ajouter un document
                               </DropdownMenuItem>
                             {canChangeStatus && (
                               <DropdownMenuItem
@@ -2524,6 +2552,7 @@ function ListingsPage() {
                                   );
                                 }}
                               >
+                                <ArrowUpDown className="h-4 w-4 mr-2" />
                                 Changer le statut
                               </DropdownMenuItem>
                             )}
@@ -2532,6 +2561,7 @@ function ListingsPage() {
                                 className="text-destructive"
                                 onSelect={() => setDeleteVehicle(vehicle)}
                               >
+                                <Trash2 className="h-4 w-4 mr-2" />
                                 Supprimer
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -2824,6 +2854,9 @@ function ListingsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Section Documents */}
+                <ListingDocuments listingId={selectedVehicle.id} />
               </div>
             </div>
           </DialogContent>
@@ -3040,6 +3073,35 @@ function ListingsPage() {
           listing={selectedListingForConversations}
           onClose={() => setSelectedListingForConversations(null)}
         />
+      )}
+
+      {/* Dialog pour uploader un document */}
+      {selectedListingForDocumentUpload && (
+        <Dialog
+          open={!!selectedListingForDocumentUpload}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedListingForDocumentUpload(null)
+            }
+          }}
+        >
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                Ajouter un document - {selectedListingForDocumentUpload.brand} {selectedListingForDocumentUpload.model}
+              </DialogTitle>
+              <DialogDescription>
+                Uploader un document lié à cette annonce
+              </DialogDescription>
+            </DialogHeader>
+            <DocumentUpload
+              listingId={selectedListingForDocumentUpload.id}
+              onUploadSuccess={() => {
+                setSelectedListingForDocumentUpload(null)
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </DashboardLayout>
   );

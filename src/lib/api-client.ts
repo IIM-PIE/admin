@@ -30,6 +30,16 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  
+  // Si on envoie un FormData, supprimer le Content-Type par défaut
+  // pour laisser axios gérer automatiquement le multipart/form-data avec la boundary
+  if (config.data instanceof FormData) {
+    // Supprimer le Content-Type pour laisser axios le gérer automatiquement
+    if (config.headers) {
+      delete (config.headers as any)['Content-Type']
+    }
+  }
+  
   return config
 })
 

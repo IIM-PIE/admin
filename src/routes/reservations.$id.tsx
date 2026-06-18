@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { listingsService } from '@/services/listings.service'
 import { quotesService } from '@/services/quotes.service'
+import { conversationsService } from '@/services/conversations.service'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ListingDocuments } from '@/components/listings/listing-documents'
+import { ConversationMessages } from '@/components/conversations/conversation-messages'
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -40,6 +42,23 @@ function ReservationDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [activeTab, setActiveTab] = useState('details')
   const [isDownloadingQuote, setIsDownloadingQuote] = useState(false)
+
+  // Récupération de la conversation dédiée à la réservation.
+  // En attendant que l'URL expose l'ID de la réservation, on retombe sur la
+  // conv liée à l'annonce — en priorisant celle qui a un reservationId.
+  const { data: listingConversations } = useQuery({
+    queryKey: ['conversations', 'listing', listing?.id],
+    queryFn: () =>
+      listing ? conversationsService.getListingConversations(listing.id) : Promise.resolve([]),
+    enabled: !!listing?.id,
+  })
+
+  const reservationConversation = useMemo(() => {
+    if (!listingConversations?.length) return null
+    return (
+      listingConversations.find((c: any) => c.reservationId) ?? listingConversations[0]
+    )
+  }, [listingConversations])
 
   const quoteMutation = useMutation({
     mutationFn: async () => {
@@ -215,6 +234,14 @@ function ReservationDetailPage() {
           <TabsList>
             <TabsTrigger value="details">Détail</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="chat" className="relative">
+              Chat
+              {reservationConversation?.unreadCount ? (
+                <Badge variant="destructive" className="ml-2 px-1.5 py-0 text-[10px]">
+                  {reservationConversation.unreadCount}
+                </Badge>
+              ) : null}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="details">
@@ -369,11 +396,46 @@ function ReservationDetailPage() {
 
           <TabsContent value="documents">
             {listing && (
-              <ListingDocuments 
-                listingId={listing.id} 
+              <ListingDocuments
+                listingId={listing.id}
                 vehicleStatus={listing.status}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="chat">
+            <div className="rounded-lg border bg-card">
+              <div className="border-b px-4 py-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Conversation avec le client
+                </p>
+                <p className="font-medium">
+                  {listing.reservedByUser?.name ?? 'Aucun client réservataire'}
+                </p>
+                {listing.reservedByUser?.email && (
+                  <p className="text-xs text-muted-foreground">{listing.reservedByUser.email}</p>
+                )}
+              </div>
+              <div className="h-[60vh] p-4">
+                {reservationConversation ? (
+                  <ConversationMessages
+                    conversationId={reservationConversation.id}
+                    senderType="admin"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-center">
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Aucune conversation pour cette réservation.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Elle sera créée automatiquement lorsque le client réservera le véhicule.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

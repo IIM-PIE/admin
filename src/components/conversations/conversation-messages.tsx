@@ -7,24 +7,32 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Send } from 'lucide-react'
 import { conversationsService } from '@/services/conversations.service'
+import { useChatSocket } from '@/hooks/use-chat-socket'
 import { MessageBubble } from './message-bubble'
 
 interface ConversationMessagesProps {
   conversationId: string
   senderType?: 'admin' | 'user'
   autoRefresh?: boolean
+  /** Polling fallback en ms quand le socket n'est pas dispo. 0 = pas de polling. */
   refreshInterval?: number
+  /** Active la souscription WebSocket pour temps réel (défaut: true). */
+  useSocket?: boolean
 }
 
 export function ConversationMessages({
   conversationId,
   senderType = 'admin',
   autoRefresh = true,
-  refreshInterval = 5000,
+  refreshInterval = 15000,
+  useSocket = true,
 }: ConversationMessagesProps) {
   const queryClient = useQueryClient()
   const [messageText, setMessageText] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Temps réel via WebSocket — le polling ci-dessous sert de fallback.
+  useChatSocket({ conversationId, enabled: useSocket })
 
   // Récupérer les messages
   const { data: messages = [], isLoading: loadingMessages } = useQuery({

@@ -55,6 +55,19 @@ export const conversationsService = {
     return []
   },
 
+  // Récupérer la conversation dédiée à une réservation (créée auto à la réservation)
+  getReservationConversation: async (reservationId: string): Promise<Conversation | null> => {
+    try {
+      const { data } = await apiClient.get<Conversation>(
+        `/conversations/reservation/${reservationId}`
+      )
+      return data
+    } catch (error: any) {
+      if (error?.response?.status === 404) return null
+      throw error
+    }
+  },
+
   // Messages
   getMessages: async (conversationId: string): Promise<Message[]> => {
     const { data } = await apiClient.get<Message[] | PaginatedResponse<Message>>('/messages', {

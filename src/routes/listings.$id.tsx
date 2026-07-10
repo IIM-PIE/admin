@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { listingsService } from '@/services/listings.service'
 import { conversationsService } from '@/services/conversations.service'
+import { reservationsService } from '@/services/reservations.service'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ListingDocuments } from '@/components/listings/listing-documents'
 import { ConversationMessages } from '@/components/conversations/conversation-messages'
 import { GenerateQuoteDialog } from '@/components/quotes/generate-quote-dialog'
+import { ReservationWorkflowTimeline } from '@/components/reservations/reservation-workflow-timeline'
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -58,6 +60,25 @@ function ReservationDetailPage() {
       listingConversations.find((c: any) => c.reservationId) ?? listingConversations[0]
     )
   }, [listingConversations])
+
+  // Réservation active liée à ce listing (pour la workflow timeline).
+  // On fetch la liste globale — TanStack Query dedup partagera le cache avec
+  // /reservations et évitera un round-trip supplémentaire quand on y navigue.
+  const { data: allReservations } = useQuery({
+    queryKey: ['reservations'],
+    queryFn: reservationsService.getAll,
+    enabled: !!listing?.id,
+  })
+  const activeReservation = useMemo(() => {
+    if (!allReservations?.length || !listing?.id) return null
+    return (
+      allReservations.find(
+        (r) =>
+          r.vehicleId === listing.id &&
+          (r.status === 'pending_payment' || r.status === 'confirmed'),
+      ) ?? null
+    )
+  }, [allReservations, listing?.id])
 
   useEffect(() => {
     setSelectedImageIndex(0)
@@ -186,6 +207,20 @@ function ReservationDetailPage() {
             </Button>
           </div>
         </div>
+
+        {activeReservation && (
+          <ReservationWorkflowTimeline
+            reservation={activeReservation}
+            vehicle={{ id: listing.id, status: listing.status }}
+            onCta={(stepKey) => {
+              if (stepKey === 'docs_client' || stepKey === 'deposit') {
+                setActiveTab('chat')
+              } else if (stepKey === 'import') {
+                setActiveTab('documents')
+              }
+            }}
+          />
+        )}
 
         <Tabs
           defaultValue="details"

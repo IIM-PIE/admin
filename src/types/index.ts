@@ -213,6 +213,7 @@ export interface Conversation {
   userId: string
   importId?: string
   listingId?: string
+  reservationId?: string
   vehicleDescription?: string
   status: 'active' | 'closed'
   unreadCount: number

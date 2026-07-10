@@ -2389,13 +2389,31 @@ function ListingsPage() {
                         {vehicle.mileage.toLocaleString("fr-FR")} km
                       </TableCell>
                       <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
-                      {/* stopPropagation : le dropdown Actions ne doit pas
-                          déclencher l'ouverture du détail via le clic row parent. */}
+                      {/* stopPropagation : les actions (raccourci conv +
+                          dropdown) ne doivent pas déclencher l'ouverture
+                          du détail via le clic row parent. */}
                       <TableCell
                         className="text-right"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <DropdownMenu>
+                        <div className="flex items-center justify-end gap-1">
+                          {/* Raccourci inline "voir conversations" — sortie
+                              du dropdown pour supprimer la friction 2 clics. */}
+                          {(vehicle._count?.conversations ?? 0) > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title={`${vehicle._count?.conversations} conversation(s)`}
+                              onClick={() => setSelectedListingForConversations(vehicle)}
+                              className="relative"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full bg-primary text-[10px] font-semibold text-primary-foreground flex items-center justify-center px-1">
+                                {vehicle._count?.conversations}
+                              </span>
+                            </Button>
+                          )}
+                          <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
@@ -2465,6 +2483,7 @@ function ListingsPage() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

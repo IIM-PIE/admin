@@ -224,6 +224,41 @@ export interface Conversation {
   messages?: Message[]
 }
 
+// Reservation & Payment types (module Stripe caution)
+export type ReservationStatus = 'pending_payment' | 'confirmed' | 'cancelled'
+export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'cancelled'
+
+export interface Payment {
+  id: string
+  reservationId: string
+  userId: string
+  stripePaymentIntentId?: string | null
+  amount: string
+  currency: string
+  status: PaymentStatus
+  stripeStatus?: string | null
+  failureReason?: string | null
+  createdAt: string
+}
+
+export interface Reservation {
+  id: string
+  userId: string
+  vehicleId: string
+  status: ReservationStatus
+  depositAmount: string
+  createdAt: string
+  updatedAt: string
+  user?: Pick<User, 'id' | 'name' | 'email'>
+  vehicle?: Vehicle
+  payments?: Payment[]
+  conversation?: {
+    id: string
+    unreadCount: number
+    status: 'active' | 'closed'
+  }
+}
+
 // Notification types
 export type NotificationType =
   | 'quote_ready'
@@ -233,6 +268,9 @@ export type NotificationType =
   | 'document_validated'
   | 'message_received'
   | 'vehicle_available'
+  | 'deposit_required'
+  | 'deposit_paid'
+  | 'reservation_cancelled'
 
 export interface Notification {
   id: string

@@ -12,7 +12,6 @@ import { MessageBubble } from './message-bubble'
 
 interface ConversationMessagesProps {
   conversationId: string
-  senderType?: 'admin' | 'user'
   autoRefresh?: boolean
   /** Polling fallback en ms quand le socket n'est pas dispo. 0 = pas de polling. */
   refreshInterval?: number
@@ -22,7 +21,6 @@ interface ConversationMessagesProps {
 
 export function ConversationMessages({
   conversationId,
-  senderType = 'admin',
   autoRefresh = true,
   refreshInterval = 15000,
   useSocket = true,
@@ -52,13 +50,13 @@ export function ConversationMessages({
   }, [messages])
 
   // Mutation pour envoyer un message
+  // senderType est dérivé du JWT côté back (rôle = 'admin' | 'user') — inutile de l'envoyer.
   const sendMessageMutation = useMutation({
     mutationFn: (content: string) =>
       conversationsService.sendMessage({
         conversationId,
         content,
         messageType: 'text',
-        senderType,
       }),
     onSuccess: () => {
       setMessageText('')

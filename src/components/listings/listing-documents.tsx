@@ -154,6 +154,18 @@ export function ListingDocuments({
                         · {(document.fileSize / 1024).toFixed(1)} KB
                       </span>
                     )}
+                    {/* Tag inline "Client" ou "Strada" : permet de garder
+                        l'info d'auteur sans les sous-titres qui écrasaient
+                        le contexte parent. */}
+                    <span
+                      className={`text-[9px] uppercase tracking-wide px-1 py-px rounded ${
+                        document.category === 'user_uploaded'
+                          ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                          : 'bg-primary/10 text-primary'
+                      }`}
+                    >
+                      {document.category === 'user_uploaded' ? 'Client' : 'Strada'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -303,20 +315,31 @@ export function ListingDocuments({
           <FileText className={`${compact ? 'h-8 w-8' : 'h-10 w-10'} mx-auto mb-2 opacity-50`} />
           <p className={compact ? 'text-xs' : 'text-sm'}>Aucun document</p>
         </div>
+      ) : compact ? (
+        /*
+          Mode compact (sidebar conv, modal fiche annonce) :
+          liste plate, sans sous-titres "client / agent" qui répétaient le
+          contexte parent (déjà indiqué par le titre "Docs de l'annonce"
+          ou "Justificatifs échangés"). L'auteur est signalé inline par un
+          petit tag "Client" / "Strada" sur chaque item.
+        */
+        renderDocumentList(documents)
       ) : (
-        <div className={compact ? 'space-y-3' : 'grid gap-4 md:grid-cols-2'}>
-          {/* Documents du client */}
-          <div className={compact ? 'space-y-2' : 'rounded-lg border p-4'}>
-            <p className={`${compact ? 'text-[10px]' : 'text-xs'} uppercase tracking-wide text-muted-foreground ${compact ? 'mb-2' : 'mb-3'}`}>
-              Documents du client
+        /*
+          Mode normal (page dédiée) : 2 colonnes distinctes pour le tri
+          "envoyés par le client" vs "fournis par Strada" — utile en vue
+          plein écran où on a la place.
+        */
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border p-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
+              Envoyés par le client
             </p>
             {renderDocumentList(userDocuments)}
           </div>
-
-          {/* Documents de l'agent */}
-          <div className={compact ? 'space-y-2' : 'rounded-lg border p-4'}>
-            <p className={`${compact ? 'text-[10px]' : 'text-xs'} uppercase tracking-wide text-muted-foreground ${compact ? 'mb-2' : 'mb-3'}`}>
-              Documents de l'agent
+          <div className="rounded-lg border p-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
+              Fournis par Strada
             </p>
             {renderDocumentList(adminDocuments)}
           </div>

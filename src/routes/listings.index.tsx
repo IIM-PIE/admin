@@ -2900,14 +2900,17 @@ function ListingsPage() {
                 )}
 
                 {/* Section Documents "de l'annonce" — toujours visible.
-                    Docs partagés entre les convs de ce listing (carte grise
-                    italienne, contrôle technique, factures d'origine…).
-                    Les justificatifs client privés sont dans la sidebar
-                    conversation, pas ici (cf. PR docs #77). */}
+                    categoryFilter='admin_provided' → on ne montre QUE les docs
+                    officiels de l'annonce (carte grise italienne, contrôle
+                    technique, factures d'origine, immatriculation FR fournis
+                    par Strada ou le seller). Les user_uploaded (justifs clients)
+                    n'appartiennent pas au bucket "annonce", ils se consultent
+                    dans la sidebar conversation ("Justificatifs échangés"). */}
                 <ListingDocuments
                   listingId={selectedVehicle.id}
                   vehicleStatus={selectedVehicle.status}
                   compact={true}
+                  categoryFilter="admin_provided"
                 />
               </div>
             </div>

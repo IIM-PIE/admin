@@ -28,6 +28,15 @@ interface ListingDocumentsProps {
    * n'intervient plus dans les requêtes docs.
    */
   conversationId?: string
+  /**
+   * Filtre par catégorie côté client (après fetch). Utile pour scoper la
+   * modale annonce aux seuls "docs officiels" (admin_provided) et masquer
+   * les justificatifs uploadés par un client — qui appartiennent
+   * sémantiquement à la conv, pas à l'annonce.
+   *
+   * Par défaut : pas de filtre (les 2 catégories affichées).
+   */
+  categoryFilter?: 'user_uploaded' | 'admin_provided'
 }
 
 const getStatusBadge = (status: string) => {
@@ -64,6 +73,7 @@ export function ListingDocuments({
   vehicleStatus,
   compact = false,
   conversationId,
+  categoryFilter,
 }: ListingDocumentsProps) {
   const queryClient = useQueryClient()
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
@@ -76,13 +86,20 @@ export function ListingDocuments({
     ? (['documents', 'conversation', conversationId] as const)
     : (['documents', 'listing', listingId] as const)
 
-  const { data: documents = [], isLoading } = useQuery({
+  const { data: allDocuments = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
       isConvMode
         ? documentsService.getConversationDocuments(conversationId!)
         : documentsService.getListingDocuments(listingId),
   })
+
+  // Filtre côté client : masque les docs qui n'appartiennent pas au bucket
+  // sémantique attendu par le parent (ex: modale annonce ne veut voir que
+  // les docs admin_provided, pas les user_uploaded orphelins).
+  const documents = categoryFilter
+    ? allDocuments.filter((d) => d.category === categoryFilter)
+    : allDocuments
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey })
 

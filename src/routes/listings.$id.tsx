@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { toast } from 'sonner'
 import { listingsService } from '@/services/listings.service'
-import { quotesService } from '@/services/quotes.service'
 import { conversationsService } from '@/services/conversations.service'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ListingDocuments } from '@/components/listings/listing-documents'
 import { ConversationMessages } from '@/components/conversations/conversation-messages'
+import { GenerateQuoteDialog } from '@/components/quotes/generate-quote-dialog'
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -41,7 +40,7 @@ function ReservationDetailPage() {
   })
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [activeTab, setActiveTab] = useState('details')
-  const [isDownloadingQuote, setIsDownloadingQuote] = useState(false)
+  const [quoteDialogOpen, setQuoteDialogOpen] = useState(false)
 
   // Récupération de la conversation dédiée à la réservation.
   // En attendant que l'URL expose l'ID de la réservation, on retombe sur la
@@ -59,37 +58,6 @@ function ReservationDetailPage() {
       listingConversations.find((c: any) => c.reservationId) ?? listingConversations[0]
     )
   }, [listingConversations])
-
-  const quoteMutation = useMutation({
-    mutationFn: async () => {
-      if (!listing?.reservedByUser?.id) {
-        throw new Error('missing_user')
-      }
-      const quote = await quotesService.requestQuote({
-        userId: listing.reservedByUser.id,
-        vehicleId: listing.id,
-      })
-      const pdfBlob = await quotesService.getQuotePdf(quote.id)
-      return { quote, pdfBlob }
-    },
-    onSuccess: ({ pdfBlob }) => {
-      const url = URL.createObjectURL(pdfBlob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `devis-${listing?.id ?? 'reservation'}.pdf`
-      link.click()
-      setTimeout(() => URL.revokeObjectURL(url), 60000)
-      setIsDownloadingQuote(false)
-    },
-    onError: (error: any) => {
-      if (error?.message === 'missing_user') {
-        toast.error('Aucun client réservataire pour générer le devis.')
-        return
-      }
-      toast.error('Erreur lors de la génération du devis.')
-      setIsDownloadingQuote(false)
-    },
-  })
 
   useEffect(() => {
     setSelectedImageIndex(0)
@@ -212,15 +180,9 @@ function ReservationDetailPage() {
             <Button
               type="button"
               className="sm:col-span-2"
-              onClick={() => {
-                if (quoteMutation.isPending || isDownloadingQuote) return
-                setIsDownloadingQuote(true)
-                quoteMutation.mutate()
-              }}
+              onClick={() => setQuoteDialogOpen(true)}
             >
-              {quoteMutation.isPending || isDownloadingQuote
-                ? 'Génération...'
-                : 'Générer un devis'}
+              Générer un devis
             </Button>
           </div>
         </div>
@@ -438,6 +400,28 @@ function ReservationDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/*
+        Modal de génération de devis. Client cible :
+        - pré-sélectionné sur reservedByUser si l'annonce est déjà réservée
+        - sinon le modal propose de choisir parmi les convs du listing
+      */}
+      {listing && (
+        <GenerateQuoteDialog
+          open={quoteDialogOpen}
+          onOpenChange={setQuoteDialogOpen}
+          vehicle={{ id: listing.id, brand: listing.brand, model: listing.model }}
+          preselectedUser={
+            listing.reservedByUser
+              ? {
+                  id: listing.reservedByUser.id,
+                  name: listing.reservedByUser.name,
+                  email: listing.reservedByUser.email,
+                }
+              : null
+          }
+        />
+      )}
     </DashboardLayout>
   )
 }

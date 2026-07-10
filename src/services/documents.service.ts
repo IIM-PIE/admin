@@ -4,6 +4,7 @@ import type { Document, PaginatedResponse, PaginationParams } from '@/types'
 interface DocumentFilters extends PaginationParams {
   importId?: string
   listingId?: string
+  conversationId?: string
   userId?: string
   status?: string
 }
@@ -29,23 +30,32 @@ export const documentsService = {
     return data
   },
 
+  /**
+   * Upload d'un document — cible (listingId | importId | conversationId) fournie
+   * par le caller selon le contexte d'upload :
+   *   - depuis la fiche annonce → listingId
+   *   - depuis une conversation → conversationId (justificatif privé à ce chat)
+   *   - depuis un dossier d'import → importId (post-réservation)
+   * Le back valide un XOR strict (exactement UN parmi les 3).
+   *
+   * userId + category sont dérivés du JWT côté back — ne pas les envoyer.
+   */
   uploadDocument: async (
     file: File,
     params: {
       listingId?: string
       importId?: string
+      conversationId?: string
       type: string
       name: string
       required?: boolean
     }
   ): Promise<Document> => {
-    // userId et category sont dérivés du JWT côté back (voir DocumentsController.create).
-    // Les envoyer ici est un vestige de l'ancienne API : whitelistés par ValidationPipe,
-    // donc silencieusement ignorés — mais mieux vaut ne pas les envoyer du tout.
     const formData = new FormData()
     formData.append('file', file)
     if (params.listingId) formData.append('listingId', params.listingId)
     if (params.importId) formData.append('importId', params.importId)
+    if (params.conversationId) formData.append('conversationId', params.conversationId)
     formData.append('type', params.type)
     formData.append('name', params.name)
     formData.append('required', String(params.required || false))
@@ -75,10 +85,23 @@ export const documentsService = {
     await apiClient.delete(`/documents/${id}`)
   },
 
-  // Récupérer les documents d'un listing
+  // Récupérer les documents d'un listing (docs "de la fiche annonce" — partagés
+  // entre toutes les convs sur ce listing)
   getListingDocuments: async (listingId: string): Promise<Document[]> => {
     const { data } = await apiClient.get<Document[] | PaginatedResponse<Document>>('/documents', {
       params: { listingId },
+    })
+    const payload: any = (data as any)?.data ?? data
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload?.data)) return payload.data
+    return []
+  },
+
+  // Récupérer les documents privés à une conversation (justificatifs échangés
+  // dans ce chat — NE fuitent PAS vers les autres convs sur la même annonce)
+  getConversationDocuments: async (conversationId: string): Promise<Document[]> => {
+    const { data } = await apiClient.get<Document[] | PaginatedResponse<Document>>('/documents', {
+      params: { conversationId },
     })
     const payload: any = (data as any)?.data ?? data
     if (Array.isArray(payload)) return payload

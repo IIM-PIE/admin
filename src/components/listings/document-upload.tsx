@@ -18,7 +18,13 @@ import type { DocumentType } from '@/types'
 import { cn } from '@/lib/utils'
 
 interface DocumentUploadProps {
-  listingId: string
+  /**
+   * Contexte d'upload — exactement UN parmi listingId ou conversationId.
+   * - listingId       : document "de la fiche annonce" (partagé entre convs)
+   * - conversationId  : justificatif privé à cette conv (ne fuit pas ailleurs)
+   */
+  listingId?: string
+  conversationId?: string
   onUploadSuccess?: () => void
 }
 
@@ -35,7 +41,7 @@ const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
   { value: 'other', label: 'Autre' },
 ]
 
-export function DocumentUpload({ listingId, onUploadSuccess }: DocumentUploadProps) {
+export function DocumentUpload({ listingId, conversationId, onUploadSuccess }: DocumentUploadProps) {
   const { user, isLoading, isAuthenticated } = useAuth()
   const queryClient = useQueryClient()
   const [file, setFile] = useState<File | null>(null)
@@ -79,8 +85,10 @@ export function DocumentUpload({ listingId, onUploadSuccess }: DocumentUploadPro
       try {
         // userId + category dérivés du JWT côté back — ne pas les envoyer.
         // Le rôle admin/agent → category = 'admin_provided' automatique.
+        // conversationId prioritaire si présent (mode "doc privé à la conv").
         const result = await documentsService.uploadDocument(fileToUpload, {
-          listingId,
+          listingId: conversationId ? undefined : listingId,
+          conversationId,
           type: documentType,
           name: documentName || fileToUpload.name,
           required: false,
@@ -96,7 +104,11 @@ export function DocumentUpload({ listingId, onUploadSuccess }: DocumentUploadPro
       toast.success('Document uploadé avec succès')
       setFile(null)
       setDocumentName('')
-      queryClient.invalidateQueries({ queryKey: ['documents', 'listing', listingId] })
+      if (conversationId) {
+        queryClient.invalidateQueries({ queryKey: ['documents', 'conversation', conversationId] })
+      } else if (listingId) {
+        queryClient.invalidateQueries({ queryKey: ['documents', 'listing', listingId] })
+      }
       queryClient.invalidateQueries({ queryKey: ['documents'] })
       onUploadSuccess?.()
     },

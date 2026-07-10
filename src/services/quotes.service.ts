@@ -22,10 +22,16 @@ export const quotesService = {
     return data
   },
 
+  /**
+   * Depuis l'admin, targetUserId doit être fourni (le back l'utilise pour attribuer
+   * le devis à un client précis — cf. PR back #76). Le back exige aussi cityDestination.
+   */
   requestQuote: async (quoteRequest: {
-    userId: string
+    targetUserId: string
+    cityDestination: string
     vehicleId?: string
     externalListingId?: string
+    vehicleDescription?: string
   }): Promise<Quote> => {
     const { data } = await apiClient.post<Quote>('/quotes/request', quoteRequest)
     return data

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,10 +10,12 @@ import {
   Car,
   Wallet,
   FileText,
+  FileDown,
 } from 'lucide-react'
 import type { Conversation } from '@/types'
 import { ConversationMessages } from './conversation-messages'
 import { ListingDocuments } from '@/components/listings/listing-documents'
+import { GenerateQuoteDialog } from '@/components/quotes/generate-quote-dialog'
 
 interface ConversationDetailProps {
   conversation: Conversation
@@ -21,6 +24,7 @@ interface ConversationDetailProps {
 
 export function ConversationDetail({ conversation, onClose }: ConversationDetailProps) {
   const navigate = useNavigate()
+  const [quoteDialogOpen, setQuoteDialogOpen] = useState(false)
 
   const handleGoToListing = () => {
     if (!conversation.listingId) return
@@ -131,6 +135,19 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
                     </span>
                   )}
                 </div>
+                {/* Génération de devis avec le client de la conv comme cible.
+                    Le userId est dispo directement — pas besoin du sélecteur du dialog. */}
+                {user && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setQuoteDialogOpen(true)}
+                  >
+                    <FileDown className="h-3.5 w-3.5 mr-2" />
+                    Générer un devis pour {user.name?.split(' ')[0] ?? 'ce client'}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -159,6 +176,20 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
           ) : null}
         </aside>
       </div>
+
+      {/* Modal génération devis — client cible = user de la conv, pré-sélectionné. */}
+      {listing && user && (
+        <GenerateQuoteDialog
+          open={quoteDialogOpen}
+          onOpenChange={setQuoteDialogOpen}
+          vehicle={{ id: listing.id, brand: listing.brand, model: listing.model }}
+          preselectedUser={{
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -173,12 +173,13 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
                 <span>Docs de l'annonce</span>
               </div>
               <p className="text-[10px] text-muted-foreground px-1">
-                Partagés entre toutes les convs sur cette annonce.
+                Documents officiels de l'annonce (fournis par Strada).
               </p>
               <ListingDocuments
                 listingId={conversation.listingId}
                 vehicleStatus={listing?.status}
                 compact
+                categoryFilter="admin_provided"
               />
             </div>
           ) : null}

@@ -77,11 +77,11 @@ export function DocumentUpload({ listingId, onUploadSuccess }: DocumentUploadPro
       }
       
       try {
+        // userId + category dérivés du JWT côté back — ne pas les envoyer.
+        // Le rôle admin/agent → category = 'admin_provided' automatique.
         const result = await documentsService.uploadDocument(fileToUpload, {
-          userId: currentUserId,
           listingId,
           type: documentType,
-          category: 'admin_provided',
           name: documentName || fileToUpload.name,
           required: false,
         })

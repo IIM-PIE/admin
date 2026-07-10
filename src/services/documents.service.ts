@@ -32,22 +32,21 @@ export const documentsService = {
   uploadDocument: async (
     file: File,
     params: {
-      userId: string
       listingId?: string
       importId?: string
       type: string
-      category: 'user_uploaded' | 'admin_provided'
       name: string
       required?: boolean
     }
   ): Promise<Document> => {
+    // userId et category sont dérivés du JWT côté back (voir DocumentsController.create).
+    // Les envoyer ici est un vestige de l'ancienne API : whitelistés par ValidationPipe,
+    // donc silencieusement ignorés — mais mieux vaut ne pas les envoyer du tout.
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('userId', params.userId)
     if (params.listingId) formData.append('listingId', params.listingId)
     if (params.importId) formData.append('importId', params.importId)
     formData.append('type', params.type)
-    formData.append('category', params.category)
     formData.append('name', params.name)
     formData.append('required', String(params.required || false))
 

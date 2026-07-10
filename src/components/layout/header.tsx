@@ -28,6 +28,9 @@ export function Header() {
       '/sellers': 'Vendeurs',
     }
 
+    if (pathname.startsWith('/listings/')) {
+      return 'Annonce'
+    }
     if (pathname.startsWith('/reservations/')) {
       return 'Réservation'
     }

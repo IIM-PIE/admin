@@ -22,11 +22,8 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
 
   const handleGoToListing = () => {
     if (!conversation.listingId) return
-    // La route "détail annonce" côté admin est encore /reservations/$id
-    // (page mal nommée qui prend en fait un listingId — dette technique
-    // reconnue dans PR #34). À renommer proprement quand on refacto le routing.
     navigate({
-      to: '/reservations/$id',
+      to: '/listings/$id',
       params: { id: conversation.listingId },
     })
   }

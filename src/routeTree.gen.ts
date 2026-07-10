@@ -22,7 +22,7 @@ import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as ConversationsRouteImport } from './routes/conversations'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReservationsIndexRouteImport } from './routes/reservations.index'
-import { Route as ReservationsIdRouteImport } from './routes/reservations.$id'
+import { Route as ListingsIdRouteImport } from './routes/listings.$id'
 
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
@@ -89,10 +89,10 @@ const ReservationsIndexRoute = ReservationsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ReservationsRoute,
 } as any)
-const ReservationsIdRoute = ReservationsIdRouteImport.update({
+const ListingsIdRoute = ListingsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => ReservationsRoute,
+  getParentRoute: () => ListingsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -101,14 +101,14 @@ export interface FileRoutesByFullPath {
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
   '/imports': typeof ImportsRoute
-  '/listings': typeof ListingsRoute
+  '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/reservations': typeof ReservationsRouteWithChildren
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/reservations/$id': typeof ReservationsIdRoute
+  '/listings/$id': typeof ListingsIdRoute
   '/reservations/': typeof ReservationsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -117,13 +117,13 @@ export interface FileRoutesByTo {
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
   '/imports': typeof ImportsRoute
-  '/listings': typeof ListingsRoute
+  '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/reservations/$id': typeof ReservationsIdRoute
+  '/listings/$id': typeof ListingsIdRoute
   '/reservations': typeof ReservationsIndexRoute
 }
 export interface FileRoutesById {
@@ -133,14 +133,14 @@ export interface FileRoutesById {
   '/documents': typeof DocumentsRoute
   '/external-listings': typeof ExternalListingsRoute
   '/imports': typeof ImportsRoute
-  '/listings': typeof ListingsRoute
+  '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/reservations': typeof ReservationsRouteWithChildren
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
-  '/reservations/$id': typeof ReservationsIdRoute
+  '/listings/$id': typeof ListingsIdRoute
   '/reservations/': typeof ReservationsIndexRoute
 }
 export interface FileRouteTypes {
@@ -158,7 +158,7 @@ export interface FileRouteTypes {
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/reservations/$id'
+    | '/listings/$id'
     | '/reservations/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -173,7 +173,7 @@ export interface FileRouteTypes {
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/reservations/$id'
+    | '/listings/$id'
     | '/reservations'
   id:
     | '__root__'
@@ -189,7 +189,7 @@ export interface FileRouteTypes {
     | '/sellers'
     | '/statistics'
     | '/users'
-    | '/reservations/$id'
+    | '/listings/$id'
     | '/reservations/'
   fileRoutesById: FileRoutesById
 }
@@ -199,7 +199,7 @@ export interface RootRouteChildren {
   DocumentsRoute: typeof DocumentsRoute
   ExternalListingsRoute: typeof ExternalListingsRoute
   ImportsRoute: typeof ImportsRoute
-  ListingsRoute: typeof ListingsRoute
+  ListingsRoute: typeof ListingsRouteWithChildren
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
   ReservationsRoute: typeof ReservationsRouteWithChildren
@@ -301,23 +301,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReservationsIndexRouteImport
       parentRoute: typeof ReservationsRoute
     }
-    '/reservations/$id': {
-      id: '/reservations/$id'
+    '/listings/$id': {
+      id: '/listings/$id'
       path: '/$id'
-      fullPath: '/reservations/$id'
-      preLoaderRoute: typeof ReservationsIdRouteImport
-      parentRoute: typeof ReservationsRoute
+      fullPath: '/listings/$id'
+      preLoaderRoute: typeof ListingsIdRouteImport
+      parentRoute: typeof ListingsRoute
     }
   }
 }
 
+interface ListingsRouteChildren {
+  ListingsIdRoute: typeof ListingsIdRoute
+}
+
+const ListingsRouteChildren: ListingsRouteChildren = {
+  ListingsIdRoute: ListingsIdRoute,
+}
+
+const ListingsRouteWithChildren = ListingsRoute._addFileChildren(
+  ListingsRouteChildren,
+)
+
 interface ReservationsRouteChildren {
-  ReservationsIdRoute: typeof ReservationsIdRoute
   ReservationsIndexRoute: typeof ReservationsIndexRoute
 }
 
 const ReservationsRouteChildren: ReservationsRouteChildren = {
-  ReservationsIdRoute: ReservationsIdRoute,
   ReservationsIndexRoute: ReservationsIndexRoute,
 }
 
@@ -331,7 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocumentsRoute: DocumentsRoute,
   ExternalListingsRoute: ExternalListingsRoute,
   ImportsRoute: ImportsRoute,
-  ListingsRoute: ListingsRoute,
+  ListingsRoute: ListingsRouteWithChildren,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
   ReservationsRoute: ReservationsRouteWithChildren,

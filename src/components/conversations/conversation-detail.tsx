@@ -2,15 +2,17 @@ import { useNavigate } from '@tanstack/react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  ArrowLeft, 
-  ExternalLink, 
+import {
+  ArrowLeft,
+  ExternalLink,
   User,
   Car,
-  DollarSign
+  Wallet,
+  FileText,
 } from 'lucide-react'
 import type { Conversation } from '@/types'
 import { ConversationMessages } from './conversation-messages'
+import { ListingDocuments } from '@/components/listings/listing-documents'
 
 interface ConversationDetailProps {
   conversation: Conversation
@@ -33,7 +35,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
 
   return (
     <div className="flex flex-col h-full">
-      {/* En-tête */}
+      {/* Header — nom user + status + actions */}
       <div className="flex items-center justify-between pb-4 border-b flex-shrink-0">
         <div className="flex items-center gap-4">
           {onClose && (
@@ -66,63 +68,97 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         </Badge>
       </div>
 
-      {/* Card annonce */}
-      {listing && (
-        <Card className="mt-4 flex-shrink-0">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Annonce liée</CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleGoToListing}
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Voir l'annonce
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <Car className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">
-                    {listing.brand} {listing.model}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Année {listing.year}</p>
+      {/*
+        Corps de la conv :
+        - Grille 2 colonnes sur desktop (thread flex-1, sidebar 320px)
+        - Empilé verticalement en dessous de lg (< 1024px)
+        - Sidebar contient 2 blocs empilés : Infos annonce + Documents
+        - min-h-0 sur les enfants pour que le scrollbar interne du thread fonctionne
+      */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 mt-4">
+        {/* Zone thread messages */}
+        <div className="min-h-0 flex flex-col">
+          <ConversationMessages conversationId={conversation.id} />
+        </div>
+
+        {/* Sidebar droite : annonce + documents (scrollable indépendamment) */}
+        <aside className="min-h-0 overflow-y-auto space-y-4 pr-1">
+          {listing ? (
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Car className="h-4 w-4" />
+                    Annonce liée
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleGoToListing}
+                    title="Voir la fiche complète"
+                    className="h-8"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">
-                    {listing.price.toLocaleString('fr-FR')} €
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {listing.importCost ? `+ ${listing.importCost.toLocaleString('fr-FR')} € import` : ''}
-                  </p>
-                </div>
-              </div>
-              {listing.images && listing.images.length > 0 && (
-                <div className="col-span-2">
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {listing.images && listing.images.length > 0 && (
                   <img
                     src={listing.images[0]}
                     alt={`${listing.brand} ${listing.model}`}
                     className="w-full h-32 object-cover rounded-md"
                   />
+                )}
+                <div>
+                  <p className="text-sm font-semibold">
+                    {listing.brand} {listing.model}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Année {listing.year}
+                  </p>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-1.5">
+                    <Wallet className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="font-medium">
+                      {listing.price.toLocaleString('fr-FR')} €
+                    </span>
+                  </div>
+                  {listing.importCost && (
+                    <span className="text-xs text-muted-foreground">
+                      + {listing.importCost.toLocaleString('fr-FR')} € import
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base text-muted-foreground">
+                  Aucune annonce liée
+                </CardTitle>
+              </CardHeader>
+            </Card>
+          )}
 
-      {/* Zone de messages - Prend tout l'espace disponible */}
-      <div className="flex-1 mt-4 min-h-0">
-        <ConversationMessages conversationId={conversation.id} />
+          {/* Documents — chargés via listingId, mode compact pour tenir en sidebar */}
+          {conversation.listingId ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground px-1">
+                <FileText className="h-4 w-4" />
+                <span>Documents</span>
+              </div>
+              <ListingDocuments
+                listingId={conversation.listingId}
+                vehicleStatus={listing?.status}
+                compact
+              />
+            </div>
+          ) : null}
+        </aside>
       </div>
     </div>
   )
 }
-

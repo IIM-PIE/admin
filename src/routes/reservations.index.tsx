@@ -146,7 +146,7 @@ function ReservationsPage() {
                         <TableCell className="font-medium">
                           {r.vehicle ? (
                             <Link
-                              to="/reservations/$id"
+                              to="/listings/$id"
                               params={{ id: r.vehicle.id }}
                               className="hover:underline"
                             >

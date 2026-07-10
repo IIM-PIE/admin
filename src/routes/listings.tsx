@@ -2370,7 +2370,11 @@ function ListingsPage() {
                 </TableHeader>
                 <TableBody>
                   {vehicles.map((vehicle) => (
-                    <TableRow key={vehicle.id}>
+                    <TableRow
+                      key={vehicle.id}
+                      onClick={() => setSelectedVehicle(vehicle)}
+                      className="cursor-pointer hover:bg-muted/50"
+                    >
                       <TableCell className="font-medium">
                         {vehicle.brand} {vehicle.model}
                       </TableCell>
@@ -2385,7 +2389,12 @@ function ListingsPage() {
                         {vehicle.mileage.toLocaleString("fr-FR")} km
                       </TableCell>
                       <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
-                      <TableCell className="text-right">
+                      {/* stopPropagation : le dropdown Actions ne doit pas
+                          déclencher l'ouverture du détail via le clic row parent. */}
+                      <TableCell
+                        className="text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -2464,7 +2473,11 @@ function ListingsPage() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {vehicles.map((vehicle) => (
-                    <Card key={vehicle.id} className="overflow-hidden">
+                    <Card
+                      key={vehicle.id}
+                      onClick={() => setSelectedVehicle(vehicle)}
+                      className="overflow-hidden cursor-pointer transition hover:shadow-md hover:border-primary/40"
+                    >
                       <div className="aspect-[4/3] bg-muted/40">
                         {vehicle.images && vehicle.images.length > 0 ? (
                           <img
@@ -2509,7 +2522,12 @@ function ListingsPage() {
                           </div>
                         </div>
 
-                        <div className="flex justify-end">
+                        {/* stopPropagation : le dropdown Actions ne doit pas
+                            déclencher l'ouverture du détail via le clic card parent. */}
+                        <div
+                          className="flex justify-end"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button

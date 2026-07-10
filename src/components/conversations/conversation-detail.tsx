@@ -12,12 +12,14 @@ import {
   Wallet,
   FileText,
   FileDown,
+  CreditCard,
 } from 'lucide-react'
 import type { Conversation } from '@/types'
 import { ConversationMessages } from './conversation-messages'
 import { ListingDocuments } from '@/components/listings/listing-documents'
 import { GenerateQuoteDialog } from '@/components/quotes/generate-quote-dialog'
 import { ReservationWorkflowTimeline } from '@/components/reservations/reservation-workflow-timeline'
+import { ReserveForClientDialog } from '@/components/reservations/reserve-for-client-dialog'
 import { reservationsService } from '@/services/reservations.service'
 
 interface ConversationDetailProps {
@@ -28,6 +30,7 @@ interface ConversationDetailProps {
 export function ConversationDetail({ conversation, onClose }: ConversationDetailProps) {
   const navigate = useNavigate()
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false)
+  const [reserveDialogOpen, setReserveDialogOpen] = useState(false)
 
   const handleGoToListing = () => {
     if (!conversation.listingId) return
@@ -170,18 +173,29 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
                     </span>
                   )}
                 </div>
-                {/* Génération de devis avec le client de la conv comme cible.
-                    Le userId est dispo directement — pas besoin du sélecteur du dialog. */}
+                {/* Actions rapides pour le client de la conv (userId déjà dispo). */}
                 {user && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setQuoteDialogOpen(true)}
-                  >
-                    <FileDown className="h-3.5 w-3.5 mr-2" />
-                    Générer un devis pour {user.name?.split(' ')[0] ?? 'ce client'}
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setQuoteDialogOpen(true)}
+                    >
+                      <FileDown className="h-3.5 w-3.5 mr-2" />
+                      Générer un devis
+                    </Button>
+                    {listing?.status === 'available' && (
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => setReserveDialogOpen(true)}
+                      >
+                        <CreditCard className="h-3.5 w-3.5 mr-2" />
+                        Réserver + lien Stripe
+                      </Button>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -245,6 +259,27 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
           open={quoteDialogOpen}
           onOpenChange={setQuoteDialogOpen}
           vehicle={{ id: listing.id, brand: listing.brand, model: listing.model }}
+          preselectedUser={{
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          }}
+        />
+      )}
+
+      {/* Modal "Réserver + lien Stripe" — client cible pré-sélectionné, envoi
+          direct du message dans cette même conv. */}
+      {listing && user && (
+        <ReserveForClientDialog
+          open={reserveDialogOpen}
+          onOpenChange={setReserveDialogOpen}
+          vehicle={{
+            id: listing.id,
+            brand: listing.brand,
+            model: listing.model,
+            year: listing.year,
+            price: listing.price,
+          }}
           preselectedUser={{
             id: user.id,
             name: user.name,

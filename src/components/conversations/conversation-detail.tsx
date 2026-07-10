@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -16,6 +17,8 @@ import type { Conversation } from '@/types'
 import { ConversationMessages } from './conversation-messages'
 import { ListingDocuments } from '@/components/listings/listing-documents'
 import { GenerateQuoteDialog } from '@/components/quotes/generate-quote-dialog'
+import { ReservationWorkflowTimeline } from '@/components/reservations/reservation-workflow-timeline'
+import { reservationsService } from '@/services/reservations.service'
 
 interface ConversationDetailProps {
   conversation: Conversation
@@ -36,6 +39,30 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
 
   const listing = conversation.listing
   const user = conversation.user
+
+  // Réservation liée à cette conv — pour la timeline compacte dans la sidebar.
+  // On préfère un lookup direct par reservationId si dispo, sinon fallback sur
+  // "1re Reservation active du listing" (couvre la période transitoire où le
+  // back n'expose pas encore reservationId sur toutes les convs).
+  const { data: allReservations } = useQuery({
+    queryKey: ['reservations'],
+    queryFn: reservationsService.getAll,
+    enabled: !!listing?.id,
+  })
+  const linkedReservation = useMemo(() => {
+    if (!allReservations?.length) return null
+    if (conversation.reservationId) {
+      return allReservations.find((r) => r.id === conversation.reservationId) ?? null
+    }
+    if (!listing?.id) return null
+    return (
+      allReservations.find(
+        (r) =>
+          r.vehicleId === listing.id &&
+          (r.status === 'pending_payment' || r.status === 'confirmed'),
+      ) ?? null
+    )
+  }, [allReservations, conversation.reservationId, listing?.id])
 
   return (
     <div className="flex flex-col h-full">
@@ -85,8 +112,16 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
           <ConversationMessages conversationId={conversation.id} />
         </div>
 
-        {/* Sidebar droite : annonce + documents (scrollable indépendamment) */}
+        {/* Sidebar droite : workflow + annonce + documents (scrollable indépendamment) */}
         <aside className="min-h-0 overflow-y-auto space-y-4 pr-1">
+          {linkedReservation && (
+            <ReservationWorkflowTimeline
+              reservation={linkedReservation}
+              vehicle={listing ? { id: listing.id, status: listing.status } : null}
+              compact
+            />
+          )}
+
           {listing ? (
             <Card>
               <CardHeader className="pb-3">

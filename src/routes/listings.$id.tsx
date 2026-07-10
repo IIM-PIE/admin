@@ -20,6 +20,7 @@ import { ListingDocuments } from '@/components/listings/listing-documents'
 import { ConversationMessages } from '@/components/conversations/conversation-messages'
 import { GenerateQuoteDialog } from '@/components/quotes/generate-quote-dialog'
 import { ReservationWorkflowTimeline } from '@/components/reservations/reservation-workflow-timeline'
+import { ReserveForClientDialog } from '@/components/reservations/reserve-for-client-dialog'
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -43,6 +44,7 @@ function ReservationDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [activeTab, setActiveTab] = useState('details')
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false)
+  const [reserveDialogOpen, setReserveDialogOpen] = useState(false)
 
   // Récupération de la conversation dédiée à la réservation.
   // En attendant que l'URL expose l'ID de la réservation, on retombe sur la
@@ -200,10 +202,31 @@ function ReservationDetailPage() {
             </div>
             <Button
               type="button"
-              className="sm:col-span-2"
+              variant="secondary"
               onClick={() => setQuoteDialogOpen(true)}
             >
               Générer un devis
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setReserveDialogOpen(true)}
+              disabled={
+                listing.status === 'sold' ||
+                (listing.status === 'reserved' &&
+                  activeReservation?.status !== 'pending_payment')
+              }
+              title={
+                listing.status === 'sold'
+                  ? 'Véhicule déjà vendu'
+                  : listing.status === 'reserved' &&
+                      activeReservation?.status !== 'pending_payment'
+                    ? 'Réservation déjà confirmée'
+                    : undefined
+              }
+            >
+              {activeReservation?.status === 'pending_payment'
+                ? 'Générer le lien Stripe'
+                : 'Réserver pour un client'}
             </Button>
           </div>
         </div>
@@ -453,6 +476,39 @@ function ReservationDetailPage() {
                   name: listing.reservedByUser.name,
                   email: listing.reservedByUser.email,
                 }
+              : null
+          }
+        />
+      )}
+
+      {/*
+        Dialog "Réserver pour un client" — crée la Reservation `pending_payment`
+        (ou réutilise celle déjà existante) + génère un lien Stripe Checkout à
+        envoyer via le chat. Pré-remplit `reservedByUser` s'il existe.
+      */}
+      {listing && (
+        <ReserveForClientDialog
+          open={reserveDialogOpen}
+          onOpenChange={setReserveDialogOpen}
+          vehicle={{
+            id: listing.id,
+            brand: listing.brand,
+            model: listing.model,
+            year: listing.year,
+            price: listing.price,
+          }}
+          preselectedUser={
+            listing.reservedByUser
+              ? {
+                  id: listing.reservedByUser.id,
+                  name: listing.reservedByUser.name,
+                  email: listing.reservedByUser.email,
+                }
+              : null
+          }
+          existingReservationId={
+            activeReservation?.status === 'pending_payment'
+              ? activeReservation.id
               : null
           }
         />

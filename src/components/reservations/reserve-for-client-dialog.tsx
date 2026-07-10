@@ -31,6 +31,17 @@ interface ReserveForClientDialogProps {
   vehicle: Pick<Vehicle, 'id' | 'brand' | 'model' | 'year' | 'price'>
   /** Client cible pré-sélectionné (ex : depuis la sidebar conv). */
   preselectedUser?: Pick<User, 'id' | 'name' | 'email'> | null
+  /**
+   * Reservation `pending_payment` déjà existante pour ce véhicule (ex : créée
+   * par `PATCH /listings/:id status=reserved` ou par un précédent passage sur
+   * ce dialog). Si fournie, on skip la création de résa et on appelle direct
+   * `POST /payments/reservations/:id/checkout-session`.
+   *
+   * Utile pour le cas "l'admin a marqué le véhicule reserved sans encore
+   * générer le lien Stripe" — sans ce champ, le POST /reservations renverrait
+   * un 409 (véhicule déjà réservé).
+   */
+  existingReservationId?: string | null
 }
 
 type Step = 'select_client' | 'link_ready'
@@ -52,6 +63,7 @@ export function ReserveForClientDialog({
   onOpenChange,
   vehicle,
   preselectedUser,
+  existingReservationId,
 }: ReserveForClientDialogProps) {
   const qc = useQueryClient()
   const [step, setStep] = useState<Step>('select_client')
@@ -108,24 +120,32 @@ export function ReserveForClientDialog({
 
   const generateLinkMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedUserId) throw new Error('Client non sélectionné')
+      // Sans résa existante, on doit connaître le client cible (le back utilisera
+      // `targetUserId`). Avec résa existante, le back a déjà l'userId enregistré.
+      if (!existingReservationId && !selectedUserId) {
+        throw new Error('Client non sélectionné')
+      }
 
-      // 1) Créer la Reservation en pending_payment (au nom du client cible)
-      const reservation = await reservationsService.create({
-        vehicleId: vehicle.id,
-        targetUserId: selectedUserId,
-      })
+      // 1) Si une Reservation `pending_payment` existe déjà pour ce véhicule
+      //    (typiquement : créée par PATCH /listings/:id status=reserved), on
+      //    saute la création et on l'utilise. Sinon on crée la résa maintenant.
+      const reservationId =
+        existingReservationId ??
+        (
+          await reservationsService.create({
+            vehicleId: vehicle.id,
+            targetUserId: selectedUserId,
+          })
+        ).id
 
-      // 2) Générer le lien Stripe Checkout
-      const session = await paymentsService.createCheckoutSession(reservation.id)
+      // 2) Générer le lien Stripe Checkout pour cette Reservation
+      const session = await paymentsService.createCheckoutSession(reservationId)
 
       // 3) Retrouver la conversation liée (créée automatiquement côté back)
-      const conv = await conversationsService.getReservationConversation(
-        reservation.id,
-      )
+      const conv = await conversationsService.getReservationConversation(reservationId)
 
       return {
-        reservationId: reservation.id,
+        reservationId,
         checkoutUrl: session.checkoutUrl,
         expiresAt: session.expiresAt,
         conversationId: conv?.id ?? null,
@@ -245,7 +265,14 @@ export function ReserveForClientDialog({
                 Ce qui se passe ensuite
               </p>
               <ol className="list-decimal pl-4 space-y-0.5">
-                <li>Création d'une réservation en attente de paiement</li>
+                {existingReservationId ? (
+                  <li>
+                    Utilisation de la réservation existante (
+                    <span className="font-mono">{existingReservationId.slice(0, 8)}…</span>)
+                  </li>
+                ) : (
+                  <li>Création d'une réservation en attente de paiement</li>
+                )}
                 <li>Génération d'un lien Stripe Checkout sécurisé</li>
                 <li>Envoi du lien au client via la conversation</li>
                 <li>Confirmation automatique dès que le client paie</li>
@@ -338,7 +365,9 @@ export function ReserveForClientDialog({
               <Button
                 type="button"
                 onClick={() => generateLinkMutation.mutate()}
-                disabled={!selectedUserId || isSubmittingLink}
+                disabled={
+                  (!existingReservationId && !selectedUserId) || isSubmittingLink
+                }
               >
                 {isSubmittingLink ? 'Génération…' : 'Générer le lien Stripe'}
               </Button>

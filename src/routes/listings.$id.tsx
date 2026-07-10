@@ -210,14 +210,23 @@ function ReservationDetailPage() {
             <Button
               type="button"
               onClick={() => setReserveDialogOpen(true)}
-              disabled={listing.status !== 'available'}
+              disabled={
+                listing.status === 'sold' ||
+                (listing.status === 'reserved' &&
+                  activeReservation?.status !== 'pending_payment')
+              }
               title={
-                listing.status !== 'available'
-                  ? 'Le véhicule doit être disponible pour être réservé'
-                  : undefined
+                listing.status === 'sold'
+                  ? 'Véhicule déjà vendu'
+                  : listing.status === 'reserved' &&
+                      activeReservation?.status !== 'pending_payment'
+                    ? 'Réservation déjà confirmée'
+                    : undefined
               }
             >
-              Réserver pour un client
+              {activeReservation?.status === 'pending_payment'
+                ? 'Générer le lien Stripe'
+                : 'Réserver pour un client'}
             </Button>
           </div>
         </div>
@@ -474,9 +483,8 @@ function ReservationDetailPage() {
 
       {/*
         Dialog "Réserver pour un client" — crée la Reservation `pending_payment`
-        + génère un lien Stripe Checkout à envoyer via le chat. Pré-remplit
-        `reservedByUser` s'il existe (typiquement quand une pré-réservation a
-        déjà été faite), sinon laisse choisir parmi les convs du listing.
+        (ou réutilise celle déjà existante) + génère un lien Stripe Checkout à
+        envoyer via le chat. Pré-remplit `reservedByUser` s'il existe.
       */}
       {listing && (
         <ReserveForClientDialog
@@ -496,6 +504,11 @@ function ReservationDetailPage() {
                   name: listing.reservedByUser.name,
                   email: listing.reservedByUser.email,
                 }
+              : null
+          }
+          existingReservationId={
+            activeReservation?.status === 'pending_payment'
+              ? activeReservation.id
               : null
           }
         />

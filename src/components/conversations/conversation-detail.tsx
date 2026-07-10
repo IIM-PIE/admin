@@ -185,14 +185,17 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
                       <FileDown className="h-3.5 w-3.5 mr-2" />
                       Générer un devis
                     </Button>
-                    {listing?.status === 'available' && (
+                    {(listing?.status === 'available' ||
+                      linkedReservation?.status === 'pending_payment') && (
                       <Button
                         size="sm"
                         className="w-full"
                         onClick={() => setReserveDialogOpen(true)}
                       >
                         <CreditCard className="h-3.5 w-3.5 mr-2" />
-                        Réserver + lien Stripe
+                        {linkedReservation?.status === 'pending_payment'
+                          ? 'Générer le lien Stripe'
+                          : 'Réserver + lien Stripe'}
                       </Button>
                     )}
                   </div>
@@ -268,7 +271,8 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
       )}
 
       {/* Modal "Réserver + lien Stripe" — client cible pré-sélectionné, envoi
-          direct du message dans cette même conv. */}
+          direct du message dans cette même conv. Réutilise la résa liée si
+          elle est déjà en `pending_payment`. */}
       {listing && user && (
         <ReserveForClientDialog
           open={reserveDialogOpen}
@@ -285,6 +289,11 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
             name: user.name,
             email: user.email,
           }}
+          existingReservationId={
+            linkedReservation?.status === 'pending_payment'
+              ? linkedReservation.id
+              : null
+          }
         />
       )}
     </div>

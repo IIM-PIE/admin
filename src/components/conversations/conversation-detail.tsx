@@ -160,13 +160,21 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
             </Card>
           )}
 
-          {/* Documents — chargés via listingId, mode compact pour tenir en sidebar */}
+          {/*
+            Deux sections empilées :
+              1. 📋 Docs de l'annonce (partagés entre toutes les convs sur ce listing)
+              2. 💬 Justificatifs échangés (privés à CETTE conv, ne fuitent pas)
+            Sémantique définie côté back dans PR #77 (Document.conversationId).
+          */}
           {conversation.listingId ? (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground px-1">
                 <FileText className="h-4 w-4" />
-                <span>Documents</span>
+                <span>Docs de l'annonce</span>
               </div>
+              <p className="text-[10px] text-muted-foreground px-1">
+                Partagés entre toutes les convs sur cette annonce.
+              </p>
               <ListingDocuments
                 listingId={conversation.listingId}
                 vehicleStatus={listing?.status}
@@ -174,6 +182,24 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
               />
             </div>
           ) : null}
+
+          {/* Justificatifs privés à cette conversation. Utilise le même composant
+              en mode "conversationId" : fetch et upload passent tous les 2 par
+              conversationId côté back. */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground px-1">
+              <FileText className="h-4 w-4" />
+              <span>Justificatifs échangés</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground px-1">
+              Privés à ce chat — ne sont pas visibles depuis d'autres convs.
+            </p>
+            <ListingDocuments
+              listingId={conversation.listingId ?? ''}
+              conversationId={conversation.id}
+              compact
+            />
+          </div>
         </aside>
       </div>
 

@@ -20,6 +20,14 @@ interface ListingDocumentsProps {
   listingId: string
   vehicleStatus?: 'available' | 'reserved' | 'sold'
   compact?: boolean // Pour un affichage plus compact dans les modals
+  /**
+   * Si fourni, le composant bascule en mode "docs privés à la conversation" :
+   * - fetch : GET /documents?conversationId={conversationId}
+   * - upload : formData.conversationId au lieu de formData.listingId
+   * Le listingId reste utilisé côté UI (badge annonce liée / contexte) mais
+   * n'intervient plus dans les requêtes docs.
+   */
+  conversationId?: string
 }
 
 const getStatusBadge = (status: string) => {
@@ -51,21 +59,38 @@ const getTypeLabel = (type: string) => {
   return labels[type] || type
 }
 
-export function ListingDocuments({ listingId, vehicleStatus, compact = false }: ListingDocumentsProps) {
+export function ListingDocuments({
+  listingId,
+  vehicleStatus,
+  compact = false,
+  conversationId,
+}: ListingDocumentsProps) {
   const queryClient = useQueryClient()
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const isReserved = vehicleStatus === 'reserved'
 
+  // Deux modes : "docs de la conv" (privé) vs "docs de l'annonce" (partagé).
+  // La queryKey diffère → les 2 caches coexistent sans se marcher dessus.
+  const isConvMode = Boolean(conversationId)
+  const queryKey = isConvMode
+    ? (['documents', 'conversation', conversationId] as const)
+    : (['documents', 'listing', listingId] as const)
+
   const { data: documents = [], isLoading } = useQuery({
-    queryKey: ['documents', 'listing', listingId],
-    queryFn: () => documentsService.getListingDocuments(listingId),
+    queryKey,
+    queryFn: () =>
+      isConvMode
+        ? documentsService.getConversationDocuments(conversationId!)
+        : documentsService.getListingDocuments(listingId),
   })
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey })
 
   const validateMutation = useMutation({
     mutationFn: documentsService.validateDocument,
     onSuccess: () => {
       toast.success('Document validé')
-      queryClient.invalidateQueries({ queryKey: ['documents', 'listing', listingId] })
+      invalidate()
     },
   })
 
@@ -73,7 +98,7 @@ export function ListingDocuments({ listingId, vehicleStatus, compact = false }: 
     mutationFn: documentsService.rejectDocument,
     onSuccess: () => {
       toast.success('Document rejeté')
-      queryClient.invalidateQueries({ queryKey: ['documents', 'listing', listingId] })
+      invalidate()
     },
   })
 
@@ -81,7 +106,7 @@ export function ListingDocuments({ listingId, vehicleStatus, compact = false }: 
     mutationFn: documentsService.deleteDocument,
     onSuccess: () => {
       toast.success('Document supprimé')
-      queryClient.invalidateQueries({ queryKey: ['documents', 'listing', listingId] })
+      invalidate()
     },
   })
 
@@ -321,7 +346,8 @@ export function ListingDocuments({ listingId, vehicleStatus, compact = false }: 
                 </DialogDescription>
               </DialogHeader>
               <DocumentUpload
-                listingId={listingId}
+                listingId={isConvMode ? undefined : listingId}
+                conversationId={conversationId}
                 onUploadSuccess={() => {
                   setUploadDialogOpen(false)
                 }}
@@ -355,7 +381,8 @@ export function ListingDocuments({ listingId, vehicleStatus, compact = false }: 
                 </DialogDescription>
               </DialogHeader>
               <DocumentUpload
-                listingId={listingId}
+                listingId={isConvMode ? undefined : listingId}
+                conversationId={conversationId}
                 onUploadSuccess={() => {
                   setUploadDialogOpen(false)
                 }}

@@ -2899,14 +2899,16 @@ function ListingsPage() {
                   </div>
                 )}
 
-                {/* Section Documents - Uniquement si l'annonce est réservée */}
-                {selectedVehicle.status === 'reserved' && (
-                  <ListingDocuments 
-                    listingId={selectedVehicle.id} 
-                    vehicleStatus={selectedVehicle.status}
-                    compact={true}
-                  />
-                )}
+                {/* Section Documents "de l'annonce" — toujours visible.
+                    Docs partagés entre les convs de ce listing (carte grise
+                    italienne, contrôle technique, factures d'origine…).
+                    Les justificatifs client privés sont dans la sidebar
+                    conversation, pas ici (cf. PR docs #77). */}
+                <ListingDocuments
+                  listingId={selectedVehicle.id}
+                  vehicleStatus={selectedVehicle.status}
+                  compact={true}
+                />
               </div>
             </div>
           </DialogContent>

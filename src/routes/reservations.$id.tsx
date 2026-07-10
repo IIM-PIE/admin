@@ -420,7 +420,6 @@ function ReservationDetailPage() {
                 {reservationConversation ? (
                   <ConversationMessages
                     conversationId={reservationConversation.id}
-                    senderType="admin"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-center">

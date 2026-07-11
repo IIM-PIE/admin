@@ -1,3 +1,5 @@
+// Sentry: doit rester la TOUTE PREMIÈRE importation (avant React) pour capter les erreurs au plus tôt
+import './instrument'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'

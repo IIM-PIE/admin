@@ -47,6 +47,7 @@ jobs:
           push: true
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
           tags: |
             ${{ env.IMAGE }}:${{ github.sha }}
             ${{ env.IMAGE }}:latest

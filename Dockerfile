@@ -18,6 +18,9 @@ COPY . .
 # publique, visible côté navigateur). Fournie en build-arg par la CI (secret GitHub).
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
+# VITE_SENTRY_DSN : DSN GlitchTip du front (public) — build-time, compilé dans le bundle.
+ARG VITE_SENTRY_DSN
+ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 
 RUN npm run build
 

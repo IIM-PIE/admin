@@ -1,0 +1,114 @@
+name: Deploy to Coolify
+
+# Déclenché à chaque push sur main :
+#   1. BUILD l'image (Vite build → nginx) + PUSH sur GHCR  ← logs de BUILD visibles ICI
+#   2. pointe l'app Coolify sur le tag du commit (PATCH) puis déclenche le déploiement
+#      → Coolify PULL + run (ne build pas). Image immuable par SHA = rollback simple.
+#
+# VITE_API_URL est passée en BUILD-ARG (build-time, publique — compilée dans le bundle).
+# Pas de migrations DB : c'est un front statique qui consomme l'API NestJS.
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE: ghcr.io/iim-pie/admin
+  COOLIFY_HOST: https://coolify.51.83.77.73.sslip.io
+
+jobs:
+  build-and-push:
+    name: Build & push Docker image (GHCR)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Le build tourne ICI → toute la sortie (npm ci, vite build…) est visible.
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-coolify:
+    name: Deploy on Coolify
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Point Coolify app to the freshly built image
+        run: |
+          APP_UUID=$(echo "${{ secrets.COOLIFY_WEBHOOK_URL }}" | grep -oE 'uuid=[^&]+' | cut -d= -f2)
+          if [ -z "$APP_UUID" ]; then
+            echo "::error::Impossible d'extraire l'app UUID depuis COOLIFY_WEBHOOK_URL"
+            exit 1
+          fi
+          echo "app=$APP_UUID → image ${{ env.IMAGE }}:${{ github.sha }}"
+          curl -fSsL -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "${{ env.COOLIFY_HOST }}/api/v1/applications/$APP_UUID" \
+            -d "{\"docker_registry_image_tag\": \"${{ github.sha }}\"}" > /dev/null
+          echo "✅ tag d'image mis à jour côté Coolify"
+
+      - name: Trigger Coolify deployment
+        id: trigger
+        run: |
+          RESPONSE=$(curl -fSsL -X POST \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
+            "${{ secrets.COOLIFY_WEBHOOK_URL }}")
+          echo "Response: $RESPONSE"
+          DEPLOYMENT_UUID=$(echo "$RESPONSE" | jq -r '.deployments[0].deployment_uuid // empty')
+          if [ -z "$DEPLOYMENT_UUID" ]; then
+            echo "::error::Pas de deployment_uuid dans la réponse Coolify"
+            exit 1
+          fi
+          echo "deployment_uuid=$DEPLOYMENT_UUID" >> "$GITHUB_OUTPUT"
+          echo "🚀 Déploiement déclenché : $DEPLOYMENT_UUID"
+
+      - name: Wait for Coolify deployment
+        run: |
+          DEPLOY_UUID="${{ steps.trigger.outputs.deployment_uuid }}"
+          for i in $(seq 1 60); do
+            STATUS=$(curl -fSsL \
+              -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
+              "${{ env.COOLIFY_HOST }}/api/v1/deployments/$DEPLOY_UUID" 2>/dev/null \
+              | jq -r '.status // "unknown"' 2>/dev/null || echo "unknown")
+            echo "[$i/60] Deploy status: $STATUS"
+            case "$STATUS" in
+              finished|success)
+                echo "::notice::✅ Déploiement Coolify terminé avec succès"
+                exit 0
+                ;;
+              failed|error|cancelled-by-user)
+                echo "::error::❌ Déploiement Coolify a échoué (status=$STATUS)"
+                exit 1
+                ;;
+            esac
+            sleep 10
+          done
+          echo "::error::⏱ Timeout après 10 minutes"
+          exit 1

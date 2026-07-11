@@ -22,6 +22,7 @@ import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as ConversationsRouteImport } from './routes/conversations'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReservationsIndexRouteImport } from './routes/reservations.index'
+import { Route as PaymentsIndexRouteImport } from './routes/payments.index'
 import { Route as ListingsIndexRouteImport } from './routes/listings.index'
 import { Route as ListingsIdRouteImport } from './routes/listings.$id'
 
@@ -90,6 +91,11 @@ const ReservationsIndexRoute = ReservationsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ReservationsRoute,
 } as any)
+const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
+  id: '/payments/',
+  path: '/payments/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListingsIndexRoute = ListingsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/users': typeof UsersRoute
   '/listings/$id': typeof ListingsIdRoute
   '/listings/': typeof ListingsIndexRoute
+  '/payments': typeof PaymentsIndexRoute
   '/reservations/': typeof ReservationsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/users': typeof UsersRoute
   '/listings/$id': typeof ListingsIdRoute
   '/listings': typeof ListingsIndexRoute
+  '/payments': typeof PaymentsIndexRoute
   '/reservations': typeof ReservationsIndexRoute
 }
 export interface FileRoutesById {
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/users': typeof UsersRoute
   '/listings/$id': typeof ListingsIdRoute
   '/listings/': typeof ListingsIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
   '/reservations/': typeof ReservationsIndexRoute
 }
 export interface FileRouteTypes {
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/listings/$id'
     | '/listings/'
+    | '/payments'
     | '/reservations/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/listings/$id'
     | '/listings'
+    | '/payments'
     | '/reservations'
   id:
     | '__root__'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/listings/$id'
     | '/listings/'
+    | '/payments/'
     | '/reservations/'
   fileRoutesById: FileRoutesById
 }
@@ -216,6 +228,7 @@ export interface RootRouteChildren {
   SellersRoute: typeof SellersRoute
   StatisticsRoute: typeof StatisticsRoute
   UsersRoute: typeof UsersRoute
+  PaymentsIndexRoute: typeof PaymentsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -311,6 +324,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReservationsIndexRouteImport
       parentRoute: typeof ReservationsRoute
     }
+    '/payments/': {
+      id: '/payments/'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof PaymentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/listings/': {
       id: '/listings/'
       path: '/'
@@ -367,6 +387,7 @@ const rootRouteChildren: RootRouteChildren = {
   SellersRoute: SellersRoute,
   StatisticsRoute: StatisticsRoute,
   UsersRoute: UsersRoute,
+  PaymentsIndexRoute: PaymentsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

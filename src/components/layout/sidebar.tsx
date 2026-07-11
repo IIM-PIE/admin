@@ -7,6 +7,7 @@ import {
   Store,
   MessageSquare,
   ClipboardList,
+  CreditCard,
   BarChart3,
 } from 'lucide-react'
 
@@ -32,7 +33,8 @@ export function Sidebar() {
         ...(isAdmin ? [{ icon: Store, label: 'Vendeurs', href: '/sellers' }] : []),
         ...(isAgent
           ? [
-        { icon: ClipboardList, label: 'Réservations', href: '/reservations' },
+              { icon: ClipboardList, label: 'Réservations', href: '/reservations' },
+              { icon: CreditCard, label: 'Paiements', href: '/payments' },
               { icon: MessageSquare, label: 'Conversations', href: '/conversations' },
             ]
           : []),

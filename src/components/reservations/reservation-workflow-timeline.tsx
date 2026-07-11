@@ -11,7 +11,7 @@ import type { Reservation, Vehicle } from '@/types'
  *
  * Étapes affichées :
  *   1. Réservation créée              (Reservation existe)
- *   2. Caution payée                  (Payment succeeded — Stripe ou manuel)
+ *   2. Caution payée                  (Payment succeeded via Stripe)
  *   3. Justificatifs client           (docs conversationId)
  *   4. Dossier d'import en cours      (Import existe et in_progress)
  *   5. Livraison                      (Vehicle sold)
@@ -62,6 +62,11 @@ function computeSteps(
   }
 
   // Étape 2 — Caution payée
+  //
+  // Le mode manuel a été retiré (cf. dossier stratégique §07 :
+  // acompte/facture/contrat via Stripe). La caution passe TOUJOURS par Stripe,
+  // soit via Payment Sheet natif Flutter, soit via un lien Checkout Session
+  // que l'admin envoie au client depuis le dialog "Réserver + lien Stripe".
   let step2State: StepState = 'todo'
   let step2Hint: string | undefined
   let step2Cta: string | undefined
@@ -70,17 +75,15 @@ function computeSteps(
     step2Hint = 'Réservation annulée'
   } else if (paymentSucceeded || isConfirmed) {
     step2State = 'done'
-    step2Hint = lastPayment?.stripeStatus === 'manual'
-      ? 'Paiement manuel enregistré'
-      : 'Caution Stripe reçue'
+    step2Hint = 'Caution Stripe reçue'
   } else if (paymentFailed) {
     step2State = 'blocked'
     step2Hint = 'Dernier paiement en échec'
-    step2Cta = 'Relancer le client'
+    step2Cta = 'Renvoyer un lien Stripe'
   } else {
     step2State = 'active'
-    step2Hint = 'Client doit payer via Stripe (ou marquer manuel)'
-    step2Cta = 'Marquer payé manuellement'
+    step2Hint = 'Client doit payer la caution via Stripe'
+    step2Cta = 'Envoyer le lien Stripe'
   }
   const step2: StepDef = {
     key: 'deposit',

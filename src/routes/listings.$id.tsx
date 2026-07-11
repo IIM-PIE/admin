@@ -236,8 +236,14 @@ function ReservationDetailPage() {
             reservation={activeReservation}
             vehicle={{ id: listing.id, status: listing.status }}
             onCta={(stepKey) => {
-              if (stepKey === 'docs_client' || stepKey === 'deposit') {
-                setActiveTab('chat')
+              if (stepKey === 'deposit') {
+                // "Envoyer le lien Stripe" ouvre le dialog qui génère la
+                // Checkout Session + envoie le message dans la conv.
+                setReserveDialogOpen(true)
+              } else if (stepKey === 'docs_client') {
+                // "Voir les justificatifs" → tab Documents (les justifs
+                // client sont uploadés côté client puis apparaissent ici).
+                setActiveTab('documents')
               } else if (stepKey === 'import') {
                 setActiveTab('documents')
               }

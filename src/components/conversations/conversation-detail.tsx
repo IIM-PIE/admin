@@ -122,6 +122,14 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
               reservation={linkedReservation}
               vehicle={listing ? { id: listing.id, status: listing.status } : null}
               compact
+              onCta={(stepKey) => {
+                // Depuis la sidebar conv, "Envoyer le lien Stripe" ouvre le
+                // dialog de réservation (qui gère le cas résa pending
+                // existante) — même comportement que sur la fiche annonce.
+                if (stepKey === 'deposit') {
+                  setReserveDialogOpen(true)
+                }
+              }}
             />
           )}
 

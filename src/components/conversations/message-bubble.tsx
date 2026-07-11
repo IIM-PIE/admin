@@ -7,6 +7,28 @@ interface MessageBubbleProps {
   message: Message
 }
 
+// Transforme les URLs http(s) du texte en liens cliquables. Utile surtout
+// pour les liens Stripe Checkout envoyés depuis le dialog "Réserver + lien
+// Stripe" — l'admin veut pouvoir tester le lien d'un clic.
+function renderMessageContent(text: string): React.ReactNode {
+  const parts = text.split(/(https?:\/\/\S+)/g)
+  return parts.map((part, i) =>
+    part.startsWith('http') ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline underline-offset-2 hover:opacity-80"
+      >
+        {part}
+      </a>
+    ) : (
+      <span key={i}>{part}</span>
+    ),
+  )
+}
+
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isAdmin = message.senderType === 'admin'
   const sender = message.sender
@@ -55,13 +77,21 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
         <div
           className={cn(
-            'rounded-lg px-4 py-2',
+            'rounded-lg px-4 py-2 max-w-full',
             isAdmin
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted'
           )}
         >
-          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+          {/*
+            `whitespace-pre-wrap` respecte les retours à la ligne du message.
+            `break-words` + `[overflow-wrap:anywhere]` cassent les URLs longues
+            (ex : liens Stripe Checkout de 200+ chars) pour qu'elles ne
+            débordent pas de la bulle max-w-[70%].
+          */}
+          <p className="text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+            {renderMessageContent(message.content)}
+          </p>
         </div>
         <span className="text-xs text-muted-foreground">
           {formatDate(message.createdAt)}

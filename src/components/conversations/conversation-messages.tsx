@@ -79,9 +79,17 @@ export function ConversationMessages({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* Zone de messages - Prend tout l'espace disponible */}
+      {/*
+        Zone de messages — comportement type chat (WhatsApp/iMessage) :
+        - Les messages collent au BAS de la scroll area (justify-end).
+        - Quand il n'y a qu'un ou deux messages, ils apparaissent en bas près
+          de la barre d'envoi au lieu d'être en haut avec un énorme blanc.
+        - Le `min-h-full` garantit que le container flex prend au moins la
+          hauteur du scroll parent pour que justify-end ait un effet visible.
+        - Quand le fil se remplit, la scrollbar prend le relais normalement.
+      */}
       <ScrollArea className="flex-1 min-h-0 pr-4">
-        <div className="space-y-4">
+        <div className="flex flex-col justify-end space-y-4 min-h-full">
           {loadingMessages ? (
             <div className="text-center py-8 text-muted-foreground">
               Chargement des messages...

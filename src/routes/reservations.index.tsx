@@ -21,25 +21,6 @@ const reservationStatusBadge = (status: ReservationStatus) => {
   return <Badge variant={variant}>{RESERVATION_STATUS_LABEL[status]}</Badge>
 }
 
-const paymentSourceBadge = (stripeStatus?: string | null) => {
-  // Convention côté back (cf. PR back reservations #78/#79) : stripeStatus =
-  // 'manual' pour les paiements offline (cash/virement), null/'succeeded'/etc.
-  // pour les paiements Stripe.
-  const isManual = stripeStatus === 'manual'
-  return (
-    <Badge
-      variant="outline"
-      className={
-        isManual
-          ? 'text-[10px] uppercase tracking-wide bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30'
-          : 'text-[10px] uppercase tracking-wide'
-      }
-    >
-      {isManual ? 'Manuel' : 'Stripe'}
-    </Badge>
-  )
-}
-
 const paymentStatusBadge = (status?: PaymentStatus) => {
   if (!status) return <span className="text-xs text-muted-foreground">—</span>
   const label: Record<PaymentStatus, string> = {
@@ -125,9 +106,11 @@ function ReservationsPage() {
           <CardHeader>
             <CardTitle>Réservations</CardTitle>
             <CardDescription>
-              Toutes les réservations (Stripe + Manuel). Le workflow admin PATCH
-              status='reserved' produit désormais aussi une Reservation confirmed
-              avec paiement offline — cf. PR back reservations #78/#79.
+              Toutes les réservations, du plus récent au plus ancien. Une
+              réservation démarre en <span className="font-medium">pending_payment</span> et
+              passe en <span className="font-medium">confirmed</span> quand le webhook
+              Stripe confirme la caution — que le paiement vienne de l'app mobile
+              (Payment Sheet native) ou d'un lien Checkout envoyé par l'admin.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -145,7 +128,6 @@ function ReservationsPage() {
                     <TableHead>Caution</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Paiement</TableHead>
-                    <TableHead>Source</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -178,7 +160,6 @@ function ReservationsPage() {
                         <TableCell>{formatCurrency(r.depositAmount)}</TableCell>
                         <TableCell>{reservationStatusBadge(r.status)}</TableCell>
                         <TableCell>{paymentStatusBadge(lastPayment?.status)}</TableCell>
-                        <TableCell>{paymentSourceBadge(lastPayment?.stripeStatus)}</TableCell>
                       </TableRow>
                     )
                   })}

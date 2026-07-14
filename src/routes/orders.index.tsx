@@ -126,13 +126,13 @@ function OrdersPage() {
               </SelectContent>
             </Select>
             <Input
-              placeholder="Rechercher (ex. ORD-2026-IT01…)"
+              placeholder="Rechercher (n°, réf. virement, véhicule, concession, client…)"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
                 setPage(1)
               }}
-              className="w-[280px]"
+              className="w-[380px]"
             />
           </CardContent>
         </Card>

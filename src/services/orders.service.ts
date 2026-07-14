@@ -94,6 +94,24 @@ export interface TransitionPayload {
   payoutReference?: string
 }
 
+export interface OrderHistoryEntry {
+  id: string
+  createdAt: string
+  action: string
+  changes: {
+    orderNumber?: string
+    from?: OrderStatus
+    to?: OrderStatus
+    payoutReference?: string | null
+  }
+  user: {
+    id: string
+    name: string
+    email: string
+    role: string
+  } | null
+}
+
 export interface OrderStats {
   totalCount: number
   activeCount: number
@@ -124,6 +142,11 @@ export const ordersService = {
 
   getStats: async (): Promise<OrderStats> => {
     const { data } = await apiClient.get<OrderStats>('/admin/orders/stats')
+    return data
+  },
+
+  getHistory: async (id: string): Promise<OrderHistoryEntry[]> => {
+    const { data } = await apiClient.get<OrderHistoryEntry[]>(`/admin/orders/${id}/history`)
     return data
   },
 }

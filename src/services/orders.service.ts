@@ -94,6 +94,18 @@ export interface TransitionPayload {
   payoutReference?: string
 }
 
+export interface OrderStats {
+  totalCount: number
+  activeCount: number
+  deliveredCount: number
+  cancelledCount: number
+  readyForPickupCount: number
+  inTransitCount: number
+  /** Montant total séquestré (balance_escrowed + payout_initiated), string decimal. */
+  escrowInFlightAmount: string
+  byStatus: Partial<Record<OrderStatus, number>>
+}
+
 export const ordersService = {
   list: async (q: ListOrdersQuery = {}): Promise<ListOrdersResponse> => {
     const { data } = await apiClient.get<ListOrdersResponse>('/admin/orders', { params: q })
@@ -107,6 +119,11 @@ export const ordersService = {
 
   transition: async (id: string, payload: TransitionPayload): Promise<OrderDetail> => {
     const { data } = await apiClient.patch<OrderDetail>(`/admin/orders/${id}/status`, payload)
+    return data
+  },
+
+  getStats: async (): Promise<OrderStats> => {
+    const { data } = await apiClient.get<OrderStats>('/admin/orders/stats')
     return data
   },
 }

@@ -78,6 +78,12 @@ function OrderDetailPage() {
     queryFn: () => ordersService.getOne(id),
   })
 
+  const { data: history } = useQuery({
+    queryKey: ['admin-order', id, 'history'],
+    queryFn: () => ordersService.getHistory(id),
+    enabled: !!order,
+  })
+
   const transitionMutation = useMutation({
     mutationFn: (payload: {
       status: OrderStatus
@@ -88,6 +94,7 @@ function OrderDetailPage() {
         `Commande passée à : ${ORDER_STATUS_LABELS[updated.status]}`,
       )
       queryClient.invalidateQueries({ queryKey: ['admin-order', id] })
+      queryClient.invalidateQueries({ queryKey: ['admin-order', id, 'history'] })
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] })
       setPendingStatus(null)
       setPayoutReference('')
@@ -146,6 +153,7 @@ function OrderDetailPage() {
       payoutReference: requiresPayoutRef ? payoutReference.trim() : undefined,
     })
   }
+
 
   return (
     <DashboardLayout>
@@ -336,6 +344,58 @@ function OrderDetailPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
+              Historique des transitions ({history?.length ?? 0})
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Trace de l'audit_logs — qui a fait avancer la commande, quand.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!history || history.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Aucune transition enregistrée (audit ORDER_TRANSITION).
+              </p>
+            ) : (
+              <ol className="space-y-2 text-sm">
+                {history.map((h) => (
+                  <li
+                    key={h.id}
+                    className="border-b pb-2 last:border-b-0"
+                  >
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div>
+                        <span className="text-xs text-muted-foreground">
+                          {ORDER_STATUS_LABELS[h.changes.from as OrderStatus] ??
+                            h.changes.from}
+                        </span>
+                        {' → '}
+                        <span className="font-medium">
+                          {ORDER_STATUS_LABELS[h.changes.to as OrderStatus] ??
+                            h.changes.to}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDate(h.createdAt)}
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Par : {h.user ? `${h.user.name} (${h.user.email})` : '—'}
+                      {h.changes.payoutReference && (
+                        <span className="ml-2 font-mono">
+                          réf. {h.changes.payoutReference}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader className="pb-2">

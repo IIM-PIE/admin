@@ -1,17 +1,29 @@
 name: Deploy to Coolify
 
-# Déclenché à chaque push sur main :
-#   1. BUILD l'image (Vite build → nginx) + PUSH sur GHCR  ← logs de BUILD visibles ICI
-#   2. pointe l'app Coolify sur le tag du commit (PATCH) puis déclenche le déploiement
-#      → Coolify PULL + run (ne build pas). Image immuable par SHA = rollback simple.
+# Workflow unifié pour les deux environnements Coolify (prod + preprod).
+# Se déclenche sur push `main` (prod) et push `preprod` (preprod).
 #
-# VITE_API_URL est passée en BUILD-ARG (build-time, publique — compilée dans le bundle).
+# Architecture :
+#   1. BUILD l'image (Vite build → nginx) + PUSH sur GHCR
+#      → logs de BUILD visibles ICI (npm ci, vite build…)
+#   2. PATCH Coolify pour épingler l'app sur le tag précis
+#   3. Trigger le déploiement + poll le statut
+#
+# Différences entre les 2 environnements :
+#   - `main` cible l'app `pie-admin` (prod), tag image = `<sha>` + `latest`,
+#     secret `COOLIFY_WEBHOOK_URL` + build-arg `VITE_API_URL` (prod).
+#   - `preprod` cible l'app `pie-admin-preprod`, tag = `preprod-<sha>` + `preprod`,
+#     secret `COOLIFY_WEBHOOK_URL_PREPROD` + build-arg `VITE_API_URL_PREPROD`.
+#
+# VITE_API_URL est BUILD-TIME : Vite la compile dans le bundle JS. Une même
+# image ne peut donc pas viser deux backends → une build par environnement.
 # Pas de migrations DB : c'est un front statique qui consomme l'API NestJS.
 
 on:
   push:
     branches:
       - main
+      - preprod
 
 env:
   IMAGE: ghcr.io/iim-pie/admin
@@ -46,11 +58,11 @@ jobs:
           context: .
           push: true
           build-args: |
-            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_API_URL=${{ github.ref == 'refs/heads/main' && secrets.VITE_API_URL || secrets.VITE_API_URL_PREPROD }}
             VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
           tags: |
-            ${{ env.IMAGE }}:${{ github.sha }}
-            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.ref == 'refs/heads/main' && github.sha || format('preprod-{0}', github.sha) }}
+            ${{ env.IMAGE }}:${{ github.ref == 'refs/heads/main' && 'latest' || 'preprod' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -60,19 +72,32 @@ jobs:
     needs: build-and-push
 
     steps:
+      - name: Resolve target environment
+        id: env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "webhook_url=${{ secrets.COOLIFY_WEBHOOK_URL }}" >> "$GITHUB_OUTPUT"
+            echo "image_tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            echo "env_label=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "webhook_url=${{ secrets.COOLIFY_WEBHOOK_URL_PREPROD }}" >> "$GITHUB_OUTPUT"
+            echo "image_tag=preprod-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            echo "env_label=preprod" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Point Coolify app to the freshly built image
         run: |
-          APP_UUID=$(echo "${{ secrets.COOLIFY_WEBHOOK_URL }}" | grep -oE 'uuid=[^&]+' | cut -d= -f2)
+          APP_UUID=$(echo "${{ steps.env.outputs.webhook_url }}" | grep -oE 'uuid=[^&]+' | cut -d= -f2)
           if [ -z "$APP_UUID" ]; then
-            echo "::error::Impossible d'extraire l'app UUID depuis COOLIFY_WEBHOOK_URL"
+            echo "::error::Impossible d'extraire l'app UUID depuis le webhook URL"
             exit 1
           fi
-          echo "app=$APP_UUID → image ${{ env.IMAGE }}:${{ github.sha }}"
+          echo "env=${{ steps.env.outputs.env_label }} · app=$APP_UUID → image ${{ env.IMAGE }}:${{ steps.env.outputs.image_tag }}"
           curl -fSsL -X PATCH \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             "${{ env.COOLIFY_HOST }}/api/v1/applications/$APP_UUID" \
-            -d "{\"docker_registry_image_tag\": \"${{ github.sha }}\"}" > /dev/null
+            -d "{\"docker_registry_image_tag\": \"${{ steps.env.outputs.image_tag }}\"}" > /dev/null
           echo "✅ tag d'image mis à jour côté Coolify"
 
       - name: Trigger Coolify deployment
@@ -80,7 +105,7 @@ jobs:
         run: |
           RESPONSE=$(curl -fSsL -X POST \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
-            "${{ secrets.COOLIFY_WEBHOOK_URL }}")
+            "${{ steps.env.outputs.webhook_url }}")
           echo "Response: $RESPONSE"
           DEPLOYMENT_UUID=$(echo "$RESPONSE" | jq -r '.deployments[0].deployment_uuid // empty')
           if [ -z "$DEPLOYMENT_UUID" ]; then
@@ -88,7 +113,7 @@ jobs:
             exit 1
           fi
           echo "deployment_uuid=$DEPLOYMENT_UUID" >> "$GITHUB_OUTPUT"
-          echo "🚀 Déploiement déclenché : $DEPLOYMENT_UUID"
+          echo "🚀 Déploiement ${{ steps.env.outputs.env_label }} déclenché : $DEPLOYMENT_UUID"
 
       - name: Wait for Coolify deployment
         run: |
@@ -101,11 +126,11 @@ jobs:
             echo "[$i/60] Deploy status: $STATUS"
             case "$STATUS" in
               finished|success)
-                echo "::notice::✅ Déploiement Coolify terminé avec succès"
+                echo "::notice::✅ Déploiement ${{ steps.env.outputs.env_label }} terminé avec succès"
                 exit 0
                 ;;
               failed|error|cancelled-by-user)
-                echo "::error::❌ Déploiement Coolify a échoué (status=$STATUS)"
+                echo "::error::❌ Déploiement ${{ steps.env.outputs.env_label }} a échoué (status=$STATUS)"
                 exit 1
                 ;;
             esac

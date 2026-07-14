@@ -39,6 +39,7 @@ import {
   STEP_LABELS,
   type OrderStatus,
 } from '@/services/orders.service'
+import { documentsService } from '@/services/documents.service'
 
 function formatEuros(v: string | number | null | undefined): string {
   if (v === null || v === undefined || v === '') return '—'
@@ -368,14 +369,23 @@ function OrderDetailPage() {
                         )}
                       </div>
                     </div>
-                    <a
-                      href={doc.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
                       className="text-xs text-primary hover:underline"
+                      onClick={async () => {
+                        try {
+                          const { url } = await documentsService.getDownloadUrl(doc.id)
+                          window.open(url, '_blank', 'noopener,noreferrer')
+                        } catch (e: any) {
+                          toast.error(
+                            e.response?.data?.message ||
+                              'Impossible d\'ouvrir le document',
+                          )
+                        }
+                      }}
                     >
                       Ouvrir
-                    </a>
+                    </button>
                   </li>
                 ))}
               </ul>

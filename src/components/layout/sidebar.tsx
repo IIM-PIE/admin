@@ -9,6 +9,7 @@ import {
   ClipboardList,
   CreditCard,
   BarChart3,
+  Package,
 } from 'lucide-react'
 
 export function Sidebar() {
@@ -34,6 +35,7 @@ export function Sidebar() {
         ...(isAgent
           ? [
               { icon: ClipboardList, label: 'Réservations', href: '/reservations' },
+              { icon: Package, label: 'Commandes', href: '/orders' },
               { icon: CreditCard, label: 'Paiements', href: '/payments' },
               { icon: MessageSquare, label: 'Conversations', href: '/conversations' },
             ]

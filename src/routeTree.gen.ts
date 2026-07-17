@@ -23,7 +23,9 @@ import { Route as ConversationsRouteImport } from './routes/conversations'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ReservationsIndexRouteImport } from './routes/reservations.index'
 import { Route as PaymentsIndexRouteImport } from './routes/payments.index'
+import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as ListingsIndexRouteImport } from './routes/listings.index'
+import { Route as OrdersIdRouteImport } from './routes/orders.$id'
 import { Route as ListingsIdRouteImport } from './routes/listings.$id'
 
 const UsersRoute = UsersRouteImport.update({
@@ -96,10 +98,20 @@ const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
   path: '/payments/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrdersIndexRoute = OrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListingsIndexRoute = ListingsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ListingsRoute,
+} as any)
+const OrdersIdRoute = OrdersIdRouteImport.update({
+  id: '/orders/$id',
+  path: '/orders/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ListingsIdRoute = ListingsIdRouteImport.update({
   id: '/$id',
@@ -121,7 +133,9 @@ export interface FileRoutesByFullPath {
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
   '/listings/$id': typeof ListingsIdRoute
+  '/orders/$id': typeof OrdersIdRoute
   '/listings/': typeof ListingsIndexRoute
+  '/orders': typeof OrdersIndexRoute
   '/payments': typeof PaymentsIndexRoute
   '/reservations/': typeof ReservationsIndexRoute
 }
@@ -137,7 +151,9 @@ export interface FileRoutesByTo {
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
   '/listings/$id': typeof ListingsIdRoute
+  '/orders/$id': typeof OrdersIdRoute
   '/listings': typeof ListingsIndexRoute
+  '/orders': typeof OrdersIndexRoute
   '/payments': typeof PaymentsIndexRoute
   '/reservations': typeof ReservationsIndexRoute
 }
@@ -156,7 +172,9 @@ export interface FileRoutesById {
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
   '/listings/$id': typeof ListingsIdRoute
+  '/orders/$id': typeof OrdersIdRoute
   '/listings/': typeof ListingsIndexRoute
+  '/orders/': typeof OrdersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/reservations/': typeof ReservationsIndexRoute
 }
@@ -176,7 +194,9 @@ export interface FileRouteTypes {
     | '/statistics'
     | '/users'
     | '/listings/$id'
+    | '/orders/$id'
     | '/listings/'
+    | '/orders'
     | '/payments'
     | '/reservations/'
   fileRoutesByTo: FileRoutesByTo
@@ -192,7 +212,9 @@ export interface FileRouteTypes {
     | '/statistics'
     | '/users'
     | '/listings/$id'
+    | '/orders/$id'
     | '/listings'
+    | '/orders'
     | '/payments'
     | '/reservations'
   id:
@@ -210,7 +232,9 @@ export interface FileRouteTypes {
     | '/statistics'
     | '/users'
     | '/listings/$id'
+    | '/orders/$id'
     | '/listings/'
+    | '/orders/'
     | '/payments/'
     | '/reservations/'
   fileRoutesById: FileRoutesById
@@ -228,6 +252,8 @@ export interface RootRouteChildren {
   SellersRoute: typeof SellersRoute
   StatisticsRoute: typeof StatisticsRoute
   UsersRoute: typeof UsersRoute
+  OrdersIdRoute: typeof OrdersIdRoute
+  OrdersIndexRoute: typeof OrdersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
 }
 
@@ -331,12 +357,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaymentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/orders/': {
+      id: '/orders/'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/listings/': {
       id: '/listings/'
       path: '/'
       fullPath: '/listings/'
       preLoaderRoute: typeof ListingsIndexRouteImport
       parentRoute: typeof ListingsRoute
+    }
+    '/orders/$id': {
+      id: '/orders/$id'
+      path: '/orders/$id'
+      fullPath: '/orders/$id'
+      preLoaderRoute: typeof OrdersIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/listings/$id': {
       id: '/listings/$id'
@@ -387,6 +427,8 @@ const rootRouteChildren: RootRouteChildren = {
   SellersRoute: SellersRoute,
   StatisticsRoute: StatisticsRoute,
   UsersRoute: UsersRoute,
+  OrdersIdRoute: OrdersIdRoute,
+  OrdersIndexRoute: OrdersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
 }
 export const routeTree = rootRouteImport

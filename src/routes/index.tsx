@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Users, Car, Store } from 'lucide-react'
+import { Users, Car, Store, Package, Landmark } from 'lucide-react'
 import { usersService } from '@/services/users.service'
 import { listingsService } from '@/services/listings.service'
 import { sellersService } from '@/services/sellers.service'
 import { authService } from '@/services/auth.service'
+import { ordersService } from '@/services/orders.service'
 
 function DashboardPage() {
   const { data: users, isLoading: loadingUsers } = useQuery({
@@ -39,6 +40,22 @@ function DashboardPage() {
   const totalListingsDisplay = loadingListingStats ? '...' : totalListings.toString()
   const availableVehiclesDisplay = loadingListingStats ? '...' : availableVehicles.toString()
 
+  const { data: orderStats, isLoading: loadingOrderStats } = useQuery({
+    queryKey: ['admin-orders', 'stats'],
+    queryFn: () => ordersService.getStats(),
+  })
+
+  const activeOrdersDisplay = loadingOrderStats
+    ? '...'
+    : (orderStats?.activeCount ?? 0).toString()
+  const escrowInFlightDisplay = loadingOrderStats
+    ? '...'
+    : new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency: 'EUR',
+        maximumFractionDigits: 0,
+      }).format(Number(orderStats?.escrowInFlightAmount ?? 0))
+
   const recentVehicles = vehicles || []
 
   const getVehicleStatusBadge = (status: string) => {
@@ -69,6 +86,20 @@ function DashboardPage() {
       description: `${totalListingsDisplay} annonces au total`,
       icon: Car,
     },
+    {
+      title: 'Commandes actives',
+      value: activeOrdersDisplay,
+      description: loadingOrderStats
+        ? '—'
+        : `${orderStats?.totalCount ?? 0} au total · ${orderStats?.readyForPickupCount ?? 0} prête${(orderStats?.readyForPickupCount ?? 0) > 1 ? 's' : ''} enlèvement`,
+      icon: Package,
+    },
+    {
+      title: 'Séquestre en cours',
+      value: escrowInFlightDisplay,
+      description: 'balance_escrowed + payout_initiated',
+      icon: Landmark,
+    },
   ]
 
   return (
@@ -81,7 +112,7 @@ function DashboardPage() {
           </p>
         </div> */}
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           {stats.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

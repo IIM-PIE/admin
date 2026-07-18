@@ -95,7 +95,7 @@ function DashboardPage() {
       icon: Package,
     },
     {
-      title: 'Séquestre en cours',
+      title: 'Fonds garantis en cours',
       value: escrowInFlightDisplay,
       description: 'balance_escrowed + payout_initiated',
       icon: Landmark,

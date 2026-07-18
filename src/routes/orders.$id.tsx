@@ -346,7 +346,7 @@ function OrderDetailPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Pipeline 8 étapes</CardTitle>
+            <CardTitle className="text-base">Pipeline 9 étapes</CardTitle>
             <CardDescription className="text-xs">
               Reflet visuel du parcours réservation → livraison.
             </CardDescription>
@@ -359,7 +359,7 @@ function OrderDetailPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Chiffres séquestre</CardTitle>
+              <CardTitle className="text-base">Répartition financière</CardTitle>
               <CardDescription className="text-xs">
                 Répartition financière de la commande.
               </CardDescription>
@@ -390,7 +390,7 @@ function OrderDetailPage() {
                 </span>
               </div>
               <div className="pt-3 space-y-1 text-xs text-muted-foreground">
-                <div>Séquestre reçu : {formatDate(order.escrowReceivedAt)}</div>
+                <div>Solde reçu : {formatDate(order.escrowReceivedAt)}</div>
                 <div>
                   Payout initié : {formatDate(order.payoutInitiatedAt)}
                   {order.payoutReference && (
@@ -740,7 +740,7 @@ function OrderDetailPage() {
               <strong>
                 {pendingStatus && ORDER_STATUS_LABELS[pendingStatus]}
               </strong>
-              . Le back valide la transition ; en cas de séquestre engagé,
+              . Le back valide la transition ; une fois les pièces client validées,
               l'annulation ne sera plus possible.
             </DialogDescription>
           </DialogHeader>

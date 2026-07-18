@@ -89,7 +89,7 @@ function OrdersPage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Commandes</h1>
             <p className="text-sm text-muted-foreground">
-              Pipeline séquestre B2B — 8 étapes de la réservation à la livraison.
+              Pipeline commande — 9 étapes, de la réservation à la livraison.
             </p>
           </div>
         </div>

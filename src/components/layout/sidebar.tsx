@@ -6,7 +6,6 @@ import {
   Car,
   Store,
   MessageSquare,
-  ClipboardList,
   CreditCard,
   BarChart3,
   Package,
@@ -34,7 +33,10 @@ export function Sidebar() {
         ...(isAdmin ? [{ icon: Store, label: 'Vendeurs', href: '/sellers' }] : []),
         ...(isAgent
           ? [
-              { icon: ClipboardList, label: 'Réservations', href: '/reservations' },
+              // Réservations fusionnées dans Commandes (décision Selim
+              // 18 juillet — une réservation est l'étape 1 d'une commande).
+              // La route /reservations reste accessible via URL directe
+              // pour investiguer d'anciennes réservations sans commande.
               { icon: Package, label: 'Commandes', href: '/orders' },
               { icon: CreditCard, label: 'Paiements', href: '/payments' },
               { icon: MessageSquare, label: 'Conversations', href: '/conversations' },

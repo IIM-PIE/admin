@@ -30,8 +30,36 @@ function renderMessageContent(text: string): React.ReactNode {
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
+  // La conversation est tripartite (décision Selim §11) : Strada (admin),
+  // le concessionnaire (seller) et le client (user). Le composant est monté
+  // côté admin : on aligne "moi" (admin) à gauche, les deux autres à droite
+  // et on les distingue par badge + couleur de bulle.
   const isAdmin = message.senderType === 'admin'
+  const isSeller = message.senderType === 'seller'
+  const isClient = !isAdmin && !isSeller
   const sender = message.sender
+
+  const roleLabel = isAdmin
+    ? 'Strada'
+    : isSeller
+      ? 'Concessionnaire'
+      : 'Client'
+
+  const nameLabel = isAdmin
+    ? 'Vous'
+    : sender?.name || roleLabel
+
+  const bubbleClass = isAdmin
+    ? 'bg-primary text-primary-foreground'
+    : isSeller
+      ? 'bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-100'
+      : 'bg-muted'
+
+  const badgeVariant: 'default' | 'secondary' | 'outline' = isAdmin
+    ? 'default'
+    : isSeller
+      ? 'secondary'
+      : 'outline'
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -50,7 +78,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         isAdmin ? 'flex-row' : 'flex-row-reverse'
       )}
     >
-      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+      <div
+        className={cn(
+          'h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0',
+          isAdmin
+            ? 'bg-primary/10'
+            : isSeller
+              ? 'bg-amber-100 dark:bg-amber-900/40'
+              : 'bg-muted-foreground/10',
+        )}
+      >
         {sender?.avatarUrl ? (
           <img
             src={sender.avatarUrl}
@@ -58,7 +95,16 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             className="h-full w-full rounded-full object-cover"
           />
         ) : (
-          <User className="h-4 w-4 text-primary" />
+          <User
+            className={cn(
+              'h-4 w-4',
+              isAdmin
+                ? 'text-primary'
+                : isSeller
+                  ? 'text-amber-700 dark:text-amber-300'
+                  : 'text-muted-foreground',
+            )}
+          />
         )}
       </div>
       <div
@@ -68,19 +114,15 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         )}
       >
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium">
-            {isAdmin ? 'Vous' : sender?.name || 'Client'}
-          </span>
-          <Badge variant="outline" className="text-xs">
-            {isAdmin ? 'Admin' : 'Client'}
+          <span className="text-xs font-medium">{nameLabel}</span>
+          <Badge variant={badgeVariant} className="text-xs">
+            {roleLabel}
           </Badge>
         </div>
         <div
           className={cn(
             'rounded-lg px-4 py-2 max-w-full',
-            isAdmin
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted'
+            bubbleClass,
           )}
         >
           {/*
@@ -100,4 +142,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     </div>
   )
 }
+
+// Marqueur — variable inutilisée à retirer si le linter s'en plaint. Ici
+// on la garde pour rendre la logique lisible dans le corps.
+void isClient
 

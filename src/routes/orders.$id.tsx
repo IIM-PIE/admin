@@ -536,50 +536,96 @@ function OrderDetailPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
-              Historique des transitions ({history?.length ?? 0})
+              Historique ({history?.length ?? 0})
             </CardTitle>
             <CardDescription className="text-xs">
-              Trace de l'audit_logs — qui a fait avancer la commande, quand.
+              Trace des <code className="text-[11px]">audit_logs</code> — transitions
+              avant, rollbacks, annulations. Ce qui s'est passé sur la commande, par qui.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {!history || history.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Aucune transition enregistrée (audit ORDER_TRANSITION).
+                Aucune entrée dans l'audit_logs pour cette commande.
               </p>
             ) : (
               <ol className="space-y-2 text-sm">
-                {history.map((h) => (
-                  <li
-                    key={h.id}
-                    className="border-b pb-2 last:border-b-0"
-                  >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <div>
-                        <span className="text-xs text-muted-foreground">
-                          {ORDER_STATUS_LABELS[h.changes.from as OrderStatus] ??
-                            h.changes.from}
-                        </span>
-                        {' → '}
-                        <span className="font-medium">
-                          {ORDER_STATUS_LABELS[h.changes.to as OrderStatus] ??
-                            h.changes.to}
-                        </span>
+                {history.map((h) => {
+                  const isRollback = h.action === 'ORDER_ROLLBACK'
+                  const isCancelled = h.action === 'ORDER_CANCELLED'
+                  const arrow = isRollback ? '←' : '→'
+                  const toStatus = (isCancelled ? 'cancelled' : h.changes.to) as OrderStatus | undefined
+                  return (
+                    <li
+                      key={h.id}
+                      className="border-b pb-2 last:border-b-0"
+                    >
+                      <div className="flex items-baseline justify-between gap-3">
+                        <div>
+                          <Badge
+                            variant={
+                              isCancelled
+                                ? 'destructive'
+                                : isRollback
+                                  ? 'outline'
+                                  : 'default'
+                            }
+                            className="mr-2 text-[10px]"
+                          >
+                            {isCancelled
+                              ? 'Annulation'
+                              : isRollback
+                                ? 'Rollback'
+                                : 'Transition'}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {ORDER_STATUS_LABELS[h.changes.from as OrderStatus] ??
+                              h.changes.from}
+                          </span>
+                          {' '}{arrow}{' '}
+                          <span className="font-medium">
+                            {toStatus
+                              ? ORDER_STATUS_LABELS[toStatus] ?? toStatus
+                              : '—'}
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDate(h.createdAt)}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDate(h.createdAt)}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Par : {h.user ? `${h.user.name} (${h.user.email})` : '—'}
+                        {h.changes.payoutReference && (
+                          <span className="ml-2 font-mono">
+                            réf. {h.changes.payoutReference}
+                          </span>
+                        )}
                       </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Par : {h.user ? `${h.user.name} (${h.user.email})` : '—'}
-                      {h.changes.payoutReference && (
-                        <span className="ml-2 font-mono">
-                          réf. {h.changes.payoutReference}
-                        </span>
+                      {(isRollback || isCancelled) && h.changes.reason && (
+                        <div className="text-xs mt-1">
+                          <span className="text-muted-foreground">
+                            {isCancelled ? 'Motif : ' : 'Raison : '}
+                          </span>
+                          {isCancelled
+                            ? CANCELLATION_REASON_LABELS[
+                                h.changes.reason as CancellationReason
+                              ] ?? h.changes.reason
+                            : h.changes.reason}
+                        </div>
                       )}
-                    </div>
-                  </li>
-                ))}
+                      {isCancelled && typeof h.changes.refund === 'boolean' && (
+                        <div className="text-xs text-muted-foreground">
+                          Remboursement : {h.changes.refund ? 'oui' : 'non'}
+                        </div>
+                      )}
+                      {isCancelled && h.changes.note && (
+                        <div className="text-xs text-muted-foreground italic mt-1">
+                          « {h.changes.note} »
+                        </div>
+                      )}
+                    </li>
+                  )
+                })}
               </ol>
             )}
           </CardContent>

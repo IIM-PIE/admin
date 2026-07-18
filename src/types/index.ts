@@ -199,7 +199,7 @@ export interface Message {
   id: string
   conversationId: string
   senderId: string
-  senderType: 'user' | 'admin'
+  senderType: 'user' | 'admin' | 'seller'
   messageType: 'text' | 'quote' | 'document'
   content: string
   quoteData?: Record<string, any>

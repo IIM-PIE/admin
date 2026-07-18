@@ -12,15 +12,13 @@ import {
   Wallet,
   FileText,
   FileDown,
-  CreditCard,
 } from 'lucide-react'
 import type { Conversation } from '@/types'
 import { ConversationMessages } from './conversation-messages'
 import { ListingDocuments } from '@/components/listings/listing-documents'
 import { GenerateQuoteDialog } from '@/components/quotes/generate-quote-dialog'
-import { ReservationWorkflowTimeline } from '@/components/reservations/reservation-workflow-timeline'
-import { ReserveForClientDialog } from '@/components/reservations/reserve-for-client-dialog'
-import { reservationsService } from '@/services/reservations.service'
+import { OrderWorkflowTimeline } from '@/components/orders/order-workflow-timeline'
+import { ordersService, ORDER_STATUS_LABELS } from '@/services/orders.service'
 
 interface ConversationDetailProps {
   conversation: Conversation
@@ -30,7 +28,6 @@ interface ConversationDetailProps {
 export function ConversationDetail({ conversation, onClose }: ConversationDetailProps) {
   const navigate = useNavigate()
   const [quoteDialogOpen, setQuoteDialogOpen] = useState(false)
-  const [reserveDialogOpen, setReserveDialogOpen] = useState(false)
 
   const handleGoToListing = () => {
     if (!conversation.listingId) return
@@ -43,29 +40,25 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
   const listing = conversation.listing
   const user = conversation.user
 
-  // Réservation liée à cette conv — pour la timeline compacte dans la sidebar.
-  // On préfère un lookup direct par reservationId si dispo, sinon fallback sur
-  // "1re Reservation active du listing" (couvre la période transitoire où le
-  // back n'expose pas encore reservationId sur toutes les convs).
-  const { data: allReservations } = useQuery({
-    queryKey: ['reservations'],
-    queryFn: reservationsService.getAll,
-    enabled: !!listing?.id,
+  // Commande liée à cette conv — on cherche l'Order où le client de la conv
+  // et le véhicule matchent. Le back ne propose pas de filtre par vehicleId,
+  // donc on scope par userId (déjà petit set côté client) puis on matche le
+  // véhicule côté front. Sans user ou listing, pas de fetch.
+  const { data: userOrders } = useQuery({
+    queryKey: ['orders', 'by-user', user?.id],
+    queryFn: () => ordersService.list({ userId: user!.id, limit: 20 }),
+    enabled: !!user?.id && !!listing?.id,
   })
-  const linkedReservation = useMemo(() => {
-    if (!allReservations?.length) return null
-    if (conversation.reservationId) {
-      return allReservations.find((r) => r.id === conversation.reservationId) ?? null
-    }
-    if (!listing?.id) return null
+  const linkedOrder = useMemo(() => {
+    if (!userOrders?.data?.length || !listing?.id) return null
+    // Priorité aux orders non-annulées ; sinon on prend la plus récente qui matche.
+    const matches = userOrders.data.filter((o) => o.vehicle?.id === listing.id)
     return (
-      allReservations.find(
-        (r) =>
-          r.vehicleId === listing.id &&
-          (r.status === 'pending_payment' || r.status === 'confirmed'),
-      ) ?? null
+      matches.find((o) => o.status !== 'cancelled') ??
+      matches[0] ??
+      null
     )
-  }, [allReservations, conversation.reservationId, listing?.id])
+  }, [userOrders, listing?.id])
 
   return (
     <div className="flex flex-col h-full">
@@ -115,22 +108,44 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
           <ConversationMessages conversationId={conversation.id} />
         </div>
 
-        {/* Sidebar droite : workflow + annonce + documents (scrollable indépendamment) */}
+        {/* Sidebar droite : commande liée (v2) + annonce + documents (scrollable indépendamment) */}
         <aside className="min-h-0 overflow-y-auto space-y-4 pr-1">
-          {linkedReservation && (
-            <ReservationWorkflowTimeline
-              reservation={linkedReservation}
-              vehicle={listing ? { id: listing.id, status: listing.status } : null}
-              compact
-              onCta={(stepKey) => {
-                // Depuis la sidebar conv, "Envoyer le lien Stripe" ouvre le
-                // dialog de réservation (qui gère le cas résa pending
-                // existante) — même comportement que sur la fiche annonce.
-                if (stepKey === 'deposit') {
-                  setReserveDialogOpen(true)
-                }
-              }}
-            />
+          {linkedOrder && (
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Wallet className="h-4 w-4" />
+                    Commande liée
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      navigate({
+                        to: '/orders/$id',
+                        params: { id: linkedOrder.id },
+                      })
+                    }
+                    title="Ouvrir la commande"
+                    className="h-8"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {linkedOrder.orderNumber}
+                  </span>
+                  <Badge variant="outline" className="text-[10px]">
+                    {ORDER_STATUS_LABELS[linkedOrder.status]}
+                  </Badge>
+                </div>
+                <OrderWorkflowTimeline status={linkedOrder.status} compact />
+              </CardContent>
+            </Card>
           )}
 
           {listing ? (
@@ -181,32 +196,22 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
                     </span>
                   )}
                 </div>
-                {/* Actions rapides pour le client de la conv (userId déjà dispo). */}
+                {/*
+                  Actions rapides — en workflow v2, le lien Stripe pour
+                  l'acompte est initié depuis l'app mobile côté client, plus
+                  depuis un dialog admin. Seul "Générer un devis" reste
+                  pertinent ici.
+                */}
                 {user && (
-                  <div className="space-y-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => setQuoteDialogOpen(true)}
-                    >
-                      <FileDown className="h-3.5 w-3.5 mr-2" />
-                      Générer un devis
-                    </Button>
-                    {(listing?.status === 'available' ||
-                      linkedReservation?.status === 'pending_payment') && (
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setReserveDialogOpen(true)}
-                      >
-                        <CreditCard className="h-3.5 w-3.5 mr-2" />
-                        {linkedReservation?.status === 'pending_payment'
-                          ? 'Générer le lien Stripe'
-                          : 'Réserver + lien Stripe'}
-                      </Button>
-                    )}
-                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setQuoteDialogOpen(true)}
+                  >
+                    <FileDown className="h-3.5 w-3.5 mr-2" />
+                    Générer un devis
+                  </Button>
                 )}
               </CardContent>
             </Card>
@@ -278,32 +283,6 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
         />
       )}
 
-      {/* Modal "Réserver + lien Stripe" — client cible pré-sélectionné, envoi
-          direct du message dans cette même conv. Réutilise la résa liée si
-          elle est déjà en `pending_payment`. */}
-      {listing && user && (
-        <ReserveForClientDialog
-          open={reserveDialogOpen}
-          onOpenChange={setReserveDialogOpen}
-          vehicle={{
-            id: listing.id,
-            brand: listing.brand,
-            model: listing.model,
-            year: listing.year,
-            price: listing.price,
-          }}
-          preselectedUser={{
-            id: user.id,
-            name: user.name,
-            email: user.email,
-          }}
-          existingReservationId={
-            linkedReservation?.status === 'pending_payment'
-              ? linkedReservation.id
-              : null
-          }
-        />
-      )}
     </div>
   )
 }

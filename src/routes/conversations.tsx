@@ -69,7 +69,7 @@ function ConversationsPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Conversations</h1>
             <p className="text-muted-foreground">
-              Gérez les conversations avec les clients
+              Fil tripartite entre le client, le concessionnaire et Strada.
             </p>
           </div>
         </div>

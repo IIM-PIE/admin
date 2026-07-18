@@ -7,25 +7,25 @@ import {
 } from '@/services/orders.service'
 
 /**
- * Timeline B2B des 8 étapes d'une commande Strada Auto.
+ * Timeline des 9 étapes d'une commande Strada Auto — v2 (refactor du 18
+ * juillet 2026, contrat commun Selim/Bogdan).
  *
  * Contrairement à `reservation-workflow-timeline.tsx` qui décrit la
  * partie B2C côté client (réservation → caution → livraison), ce composant
- * est spécifique à Order (pipeline séquestre B2B) et reflète les 8 étapes
- * de la doc fonctionnelle Selim (mémoire projet).
+ * est spécifique à Order et reflète les 9 étapes du workflow unifié.
  *
  * L'état de chaque étape est calculé à partir du `OrderStatus` courant :
  *   - étape strictement < étape courante → done
  *   - étape == étape courante → active
  *   - étape > étape courante → todo
- *   - status == cancelled → toutes les étapes ≥ étape d'annulation → cancelled
+ *   - status == cancelled → toutes les étapes marquées cancelled
  */
 interface OrderWorkflowTimelineProps {
   status: OrderStatus
   compact?: boolean
 }
 
-const STEPS: number[] = [1, 2, 3, 4, 5, 6, 7, 8]
+const STEPS: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 export function OrderWorkflowTimeline({
   status,

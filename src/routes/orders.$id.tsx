@@ -125,9 +125,16 @@ function OrderDetailPage() {
   })
 
   const invalidateOrderQueries = () => {
+    // On invalide ET on force un refetch immédiat des queries actives. La
+    // simple invalidation ne suffit pas dans tous les cas (composant qui
+    // reste monté sans window focus, cache stale-while-revalidate qui
+    // affiche l'ancienne donnée le temps du fetch). refetchQueries force
+    // un GET tout de suite et le composant re-render dès la réponse.
     queryClient.invalidateQueries({ queryKey: ['admin-order', id] })
     queryClient.invalidateQueries({ queryKey: ['admin-order', id, 'history'] })
     queryClient.invalidateQueries({ queryKey: ['admin-orders'] })
+    void queryClient.refetchQueries({ queryKey: ['admin-order', id], type: 'active' })
+    void queryClient.refetchQueries({ queryKey: ['admin-order', id, 'history'], type: 'active' })
   }
 
   const transitionMutation = useMutation({

@@ -36,7 +36,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   // et on les distingue par badge + couleur de bulle.
   const isAdmin = message.senderType === 'admin'
   const isSeller = message.senderType === 'seller'
-  const isClient = !isAdmin && !isSeller
   const sender = message.sender
 
   const roleLabel = isAdmin
@@ -142,8 +141,4 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     </div>
   )
 }
-
-// Marqueur — variable inutilisée à retirer si le linter s'en plaint. Ici
-// on la garde pour rendre la logique lisible dans le corps.
-void isClient
 

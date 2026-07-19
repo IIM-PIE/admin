@@ -26,22 +26,22 @@ export const documentsService = {
   },
 
   /**
-   * Récupère le contenu du document via le back (StreamableFile), crée une
-   * URL blob locale, l'ouvre dans un nouvel onglet, puis la révoque quand
-   * l'onglet ferme la ressource. Le fichier ne transite plus par une URL
-   * S3 externe — tout reste sur le domaine app.
+   * Ouvre un document privé. Le back vérifie l'authz puis renvoie un HTTP
+   * 302 vers une URL Garage présignée valide 5 min. On récupère cette URL
+   * via /signed-url (le back la garantit unique-use côté S3 par la signature
+   * HMAC), puis on l'ouvre dans un nouvel onglet. Rien ne transite par le
+   * back au moment du download — le browser va lire direct chez Garage.
+   *
+   * On préfère /signed-url à un window.open direct sur /download parce que
+   * l'ouverture d'un nouvel onglet ne transmet pas le Bearer JWT — l'endpoint
+   * /signed-url l'accepte, retourne l'URL, et on ouvre l'URL S3 qui elle
+   * embarque sa propre signature.
    */
   openDocument: async (id: string): Promise<void> => {
-    const { data, headers } = await apiClient.get<Blob>(`/documents/${id}/download`, {
-      responseType: 'blob',
-    })
-    const contentType = headers['content-type'] || 'application/octet-stream'
-    const blob = new Blob([data], { type: contentType })
-    const url = URL.createObjectURL(blob)
-    // Le tab garde l'URL vivante tant qu'il est ouvert ; on la révoque après
-    // 60 s côté page d'origine, suffisant pour que le navigateur ait chargé.
-    window.open(url, '_blank', 'noopener,noreferrer')
-    setTimeout(() => URL.revokeObjectURL(url), 60000)
+    const { data } = await apiClient.get<{ url: string }>(
+      `/documents/${id}/signed-url?expiresIn=300`,
+    )
+    window.open(data.url, '_blank', 'noopener,noreferrer')
   },
 
   /**

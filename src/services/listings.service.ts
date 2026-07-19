@@ -39,6 +39,21 @@ export const listingsService = {
     return data
   },
 
+  /**
+   * Upload multipart d'une à N images d'annonce. Le back stocke dans le
+   * bucket public et renvoie des URLs proxy `/listings/uploads/:key` — à
+   * pousser telles quelles dans `images: string[]` du DTO createListing.
+   */
+  uploadImages: async (files: File[]): Promise<string[]> => {
+    const form = new FormData()
+    files.forEach((f) => form.append('files', f))
+    const { data } = await apiClient.post<{ urls: string[] }>(
+      '/listings/uploads/image',
+      form,
+    )
+    return data.urls
+  },
+
   updateListing: async (id: string, updates: Partial<Vehicle>): Promise<Vehicle> => {
     const { data } = await apiClient.patch<Vehicle>(`/listings/${id}`, updates)
     return data

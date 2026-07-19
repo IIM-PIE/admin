@@ -129,8 +129,7 @@ export function ListingDocuments({
 
   const handleDownload = async (documentId: string) => {
     try {
-      const { url } = await documentsService.getDownloadUrl(documentId)
-      window.open(url, '_blank')
+      await documentsService.openDocument(documentId)
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Erreur lors du téléchargement')
     }

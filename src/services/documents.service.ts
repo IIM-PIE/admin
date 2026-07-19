@@ -25,9 +25,23 @@ export const documentsService = {
     return data
   },
 
-  getDownloadUrl: async (id: string): Promise<{ url: string }> => {
-    const { data } = await apiClient.get<{ url: string }>(`/documents/${id}/download`)
-    return data
+  /**
+   * Récupère le contenu du document via le back (StreamableFile), crée une
+   * URL blob locale, l'ouvre dans un nouvel onglet, puis la révoque quand
+   * l'onglet ferme la ressource. Le fichier ne transite plus par une URL
+   * S3 externe — tout reste sur le domaine app.
+   */
+  openDocument: async (id: string): Promise<void> => {
+    const { data, headers } = await apiClient.get<Blob>(`/documents/${id}/download`, {
+      responseType: 'blob',
+    })
+    const contentType = headers['content-type'] || 'application/octet-stream'
+    const blob = new Blob([data], { type: contentType })
+    const url = URL.createObjectURL(blob)
+    // Le tab garde l'URL vivante tant qu'il est ouvert ; on la révoque après
+    // 60 s côté page d'origine, suffisant pour que le navigateur ait chargé.
+    window.open(url, '_blank', 'noopener,noreferrer')
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
   },
 
   /**

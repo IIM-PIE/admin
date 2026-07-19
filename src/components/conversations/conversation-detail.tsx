@@ -19,6 +19,7 @@ import { ListingDocuments } from '@/components/listings/listing-documents'
 import { GenerateQuoteDialog } from '@/components/quotes/generate-quote-dialog'
 import { OrderWorkflowTimeline } from '@/components/orders/order-workflow-timeline'
 import { ordersService, ORDER_STATUS_LABELS } from '@/services/orders.service'
+import { resolveImageUrl } from '@/lib/api-client'
 
 interface ConversationDetailProps {
   conversation: Conversation
@@ -170,7 +171,7 @@ export function ConversationDetail({ conversation, onClose }: ConversationDetail
               <CardContent className="space-y-3">
                 {listing.images && listing.images.length > 0 && (
                   <img
-                    src={listing.images[0]}
+                    src={resolveImageUrl(listing.images[0])}
                     alt={`${listing.brand} ${listing.model}`}
                     className="w-full h-32 object-cover rounded-md"
                   />

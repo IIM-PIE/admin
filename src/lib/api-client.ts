@@ -1,6 +1,26 @@
 import axios from 'axios'
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+export const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+/**
+ * Résout une URL d'image stockée en DB. Le back renvoie des URLs relatives
+ * `/listings/uploads/…` (proxy vers Garage). Si on les met telles quelles
+ * dans `<img src="…">`, le browser cible l'origine du front, pas l'API.
+ * Ce helper préfixe avec `baseURL` sur les URLs qui commencent par
+ * `/listings/uploads/` ou `/documents/`. Toute autre URL (http externe,
+ * data:, blob:) est renvoyée telle quelle.
+ */
+export function resolveImageUrl(url: string | null | undefined): string {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://') ||
+      url.startsWith('data:') || url.startsWith('blob:')) {
+    return url
+  }
+  if (url.startsWith('/listings/uploads/') || url.startsWith('/documents/')) {
+    return `${baseURL}${url}`
+  }
+  return url
+}
 
 const apiClient = axios.create({
   baseURL,

@@ -70,6 +70,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { listingsService } from "@/services/listings.service";
+import { resolveImageUrl } from "@/lib/api-client";
 import { sellersService } from "@/services/sellers.service";
 import { conversationsService } from "@/services/conversations.service";
 import { usersService } from "@/services/users.service";
@@ -2554,9 +2555,9 @@ function ListingsPage() {
                       className="overflow-hidden cursor-pointer transition hover:shadow-md hover:border-primary/40"
                     >
                       <div className="aspect-[4/3] bg-muted/40">
-                        {vehicle.images && vehicle.images.length > 0 ? (
+                        {vehicle.images && vehicle.images.length > 0 && vehicle.images[0] ? (
                           <img
-                            src={vehicle.images[0]}
+                            src={resolveImageUrl(vehicle.images[0])}
                             alt={`${vehicle.brand} ${vehicle.model}`}
                             className="h-full w-full object-cover"
                           />

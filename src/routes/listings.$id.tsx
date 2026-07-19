@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { listingsService } from '@/services/listings.service'
+import { resolveImageUrl } from '@/lib/api-client'
 import { conversationsService } from '@/services/conversations.service'
 import { reservationsService } from '@/services/reservations.service'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
@@ -276,7 +277,7 @@ function ReservationDetailPage() {
                 <div className="overflow-hidden rounded-lg border bg-muted/50">
                   {listing.images && listing.images.length > 0 ? (
                     <img
-                      src={listing.images[Math.min(selectedImageIndex, listing.images.length - 1)]}
+                      src={resolveImageUrl(listing.images[Math.min(selectedImageIndex, listing.images.length - 1)])}
                       alt={`${listing.brand} ${listing.model}`}
                       className="h-72 w-full object-cover"
                     />
@@ -302,7 +303,7 @@ function ReservationDetailPage() {
                         aria-label={`Voir image ${index + 1}`}
                       >
                         <img
-                          src={url}
+                          src={resolveImageUrl(url)}
                           alt={`Aperçu ${index + 1}`}
                           className="h-20 w-full object-cover"
                         />

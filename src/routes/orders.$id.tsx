@@ -270,7 +270,14 @@ function OrderDetailPage() {
   }
 
   const currentStep = ORDER_STATUS_STEP[order.status]
-  const allowedNext = ORDER_TRANSITIONS[order.status]
+  // Source de vérité 100 % back : `order.availableTransitions` renvoyé
+  // par /admin/orders/:id est déjà filtré par le rôle du user courant
+  // (admin | agent). Les transitions seller-only (payout_confirmed,
+  // ready_for_pickup) N'apparaissent PAS ici — le back les refuserait
+  // de toute façon. Fallback sur ORDER_TRANSITIONS local uniquement si
+  // le back ne renvoie pas encore le champ (compat déploiement).
+  const allowedNext: OrderStatus[] =
+    (order as any).availableTransitions ?? ORDER_TRANSITIONS[order.status]
   // Bouton Annuler séparé de la ligne des transitions avant : plus clair
   // pour l'ops (une action = un bouton dédié).
   const forwardTransitions = allowedNext.filter((s) => s !== 'cancelled')

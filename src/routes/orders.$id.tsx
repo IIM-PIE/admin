@@ -733,9 +733,7 @@ function OrderDetailPage() {
                           className="text-xs text-primary hover:underline"
                           onClick={async () => {
                             try {
-                              const { url } =
-                                await documentsService.getDownloadUrl(doc.id)
-                              window.open(url, '_blank', 'noopener,noreferrer')
+                              await documentsService.openDocument(doc.id)
                             } catch (e: any) {
                               toast.error(
                                 e.response?.data?.message ||

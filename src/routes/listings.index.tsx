@@ -2755,14 +2755,14 @@ function ListingsPage() {
                   {selectedVehicle.images &&
                   selectedVehicle.images.length > 0 ? (
                     <img
-                      src={
+                      src={resolveImageUrl(
                         selectedVehicle.images[
                           Math.min(
                             selectedImageIndex,
                             selectedVehicle.images.length - 1
                           )
                         ]
-                      }
+                      )}
                       alt={`${selectedVehicle.brand} ${selectedVehicle.model}`}
                       className="h-64 w-full object-cover"
                     />
@@ -2789,7 +2789,7 @@ function ListingsPage() {
                           aria-label={`Voir image ${index + 1}`}
                         >
                           <img
-                            src={url}
+                            src={resolveImageUrl(url)}
                             alt={`Aperçu ${index + 1}`}
                             className="h-20 w-full object-cover"
                           />

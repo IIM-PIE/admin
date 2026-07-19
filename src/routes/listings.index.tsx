@@ -105,6 +105,7 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
   const [currentEquipment, setCurrentEquipment] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [currentImage, setCurrentImage] = useState("");
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const [formData, setFormData] = useState({
     sellerId: "",
@@ -754,11 +755,41 @@ export function AddAnnonceForm({ onClose }: { onClose: () => void }) {
 
       {/* Images */}
       <div className="space-y-2">
-        <Label htmlFor="images">Images (URLs) (max {MAX_IMAGES})</Label>
+        <Label htmlFor="images">Images (max {MAX_IMAGES})</Label>
+        {/*
+          Deux voies possibles pour ajouter des images :
+          1) Upload depuis le disque — bouton "Choisir des fichiers", pousse
+             vers /listings/uploads/image côté back, qui range dans Garage
+             et renvoie des URLs proxy `/listings/uploads/…`.
+          2) Coller une URL — cas legacy où on référence une image externe.
+        */}
         <div className="flex gap-2">
           <Input
-            id="images"
-            placeholder="https://exemple.com/image.jpg"
+            id="images-file"
+            type="file"
+            accept="image/*"
+            multiple
+            disabled={createMutation.isPending || images.length >= MAX_IMAGES || uploadingImages}
+            onChange={async (e) => {
+              const files = Array.from(e.target.files ?? [])
+              if (files.length === 0) return
+              try {
+                setUploadingImages(true)
+                const room = MAX_IMAGES - images.length
+                const urls = await listingsService.uploadImages(files.slice(0, room))
+                setImages([...images, ...urls])
+              } catch (err: any) {
+                toast.error(err.response?.data?.message || 'Upload échoué')
+              } finally {
+                setUploadingImages(false)
+                e.target.value = ''
+              }
+            }}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Input
+            placeholder="…ou coller une URL"
             value={currentImage}
             onChange={(e) => setCurrentImage(e.target.value)}
             onKeyPress={(e) =>
@@ -831,6 +862,7 @@ function EditAnnonceForm({
   const [currentEquipment, setCurrentEquipment] = useState("");
   const [images, setImages] = useState<string[]>(vehicle.images || []);
   const [currentImage, setCurrentImage] = useState("");
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const [formData, setFormData] = useState({
     sellerId: vehicle.sellerId || "",
@@ -1509,11 +1541,35 @@ function EditAnnonceForm({
 
       {/* Images */}
       <div className="space-y-2">
-        <Label htmlFor="images_edit">Images (URLs) (max {MAX_IMAGES})</Label>
+        <Label htmlFor="images_edit">Images (max {MAX_IMAGES})</Label>
+        <div className="flex gap-2">
+          <Input
+            id="images_edit_file"
+            type="file"
+            accept="image/*"
+            multiple
+            disabled={updateMutation.isPending || images.length >= MAX_IMAGES || uploadingImages}
+            onChange={async (e) => {
+              const files = Array.from(e.target.files ?? [])
+              if (files.length === 0) return
+              try {
+                setUploadingImages(true)
+                const room = MAX_IMAGES - images.length
+                const urls = await listingsService.uploadImages(files.slice(0, room))
+                setImages([...images, ...urls])
+              } catch (err: any) {
+                toast.error(err.response?.data?.message || 'Upload échoué')
+              } finally {
+                setUploadingImages(false)
+                e.target.value = ''
+              }
+            }}
+          />
+        </div>
         <div className="flex gap-2">
           <Input
             id="images_edit"
-            placeholder="https://exemple.com/image.jpg"
+            placeholder="…ou coller une URL"
             value={currentImage}
             onChange={(e) => setCurrentImage(e.target.value)}
             onKeyPress={(e) =>

@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useSearch } from '@tanstack/react-router'
+import { createFileRoute, redirect, useSearch, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
 import { authService } from '@/services/auth.service'
@@ -11,12 +11,24 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 function ConversationsPage() {
   const search = useSearch({ from: '/conversations' })
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
-    (search as { conversationId?: string })?.conversationId || null
-  )
+  const navigate = useNavigate()
+  // La searchParam `conversationId` est la source de vérité — pas de state
+  // local dupliqué. Un state local re-forçait la sélection à chaque render
+  // via un useEffect qui lisait l'URL, ce qui bloquait tout switch de conv
+  // après une arrivée avec ?conversationId=X depuis /listings/:id.
+  const selectedConversationId =
+    (search as { conversationId?: string })?.conversationId ?? null
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all')
   const [showList, setShowList] = useState(true)
+
+  const setSelectedConversationId = (id: string | null) => {
+    navigate({
+      to: '/conversations',
+      search: (prev) => ({ ...prev, conversationId: id ?? undefined }),
+      replace: true,
+    })
+  }
 
   // Récupérer toutes les conversations
   const { data: conversations, isLoading } = useQuery({
@@ -48,19 +60,14 @@ function ConversationsPage() {
   // Conversation sélectionnée
   const selectedConversation = conversations?.find(c => c.id === selectedConversationId)
 
-  // Auto-sélectionner la conversation depuis l'URL ou la première conversation
+  // Si aucun conversationId dans l'URL et qu'on a des convs, on sélectionne
+  // la 1re — mais UNIQUEMENT ce cas ; le switch entre convs passe par les
+  // clics utilisateur, qui updatent l'URL via setSelectedConversationId.
   useEffect(() => {
-    const urlConversationId = (search as { conversationId?: string })?.conversationId
-    if (urlConversationId) {
-      // Vérifier que la conversation existe dans la liste
-      const conversationExists = filteredConversations.some(c => c.id === urlConversationId)
-      if (conversationExists) {
-        setSelectedConversationId(urlConversationId)
-      }
-    } else if (!selectedConversationId && filteredConversations.length > 0) {
+    if (!selectedConversationId && filteredConversations.length > 0) {
       setSelectedConversationId(filteredConversations[0].id)
     }
-  }, [filteredConversations, selectedConversationId, search])
+  }, [filteredConversations, selectedConversationId])
 
   return (
     <DashboardLayout>

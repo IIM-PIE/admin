@@ -58,6 +58,7 @@ import {
 } from '@/services/orders.service'
 import { documentsService } from '@/services/documents.service'
 import { useAuth } from '@/contexts/auth-context'
+import { getTransitionMeta } from '@/lib/order-transitions'
 
 function formatEuros(v: string | number | null | undefined): string {
   if (v === null || v === undefined || v === '') return '—'
@@ -785,57 +786,117 @@ function OrderDetailPage() {
         </Card>
       </div>
 
+      {/* Modale transition — contenu dynamisé par ORDER_TRANSITION_META
+          selon le statut cible (titre, description, effets, prérequis,
+          avertissements, inputs, libellé du bouton). Voir
+          lib/order-transitions.ts pour la source. */}
       <Dialog
         open={pendingStatus !== null}
         onOpenChange={(open) => !open && setPendingStatus(null)}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmer la transition</DialogTitle>
-            <DialogDescription>
-              Passer la commande{' '}
-              <span className="font-mono">{order.orderNumber}</span> à :{' '}
-              <strong>
-                {pendingStatus && ORDER_STATUS_LABELS[pendingStatus]}
-              </strong>
-              . Le back valide la transition ; une fois les pièces client validées,
-              l'annulation ne sera plus possible.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-lg">
+          {pendingStatus && (() => {
+            const meta = getTransitionMeta(pendingStatus)
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{meta.title}</DialogTitle>
+                  <DialogDescription>
+                    {meta.description}
+                  </DialogDescription>
+                </DialogHeader>
 
-          {requiresPayoutRef && (
-            <div className="space-y-2 pt-2">
-              <Label htmlFor="payout-ref">Référence bancaire du virement</Label>
-              <Input
-                id="payout-ref"
-                autoFocus
-                value={payoutReference}
-                onChange={(e) => setPayoutReference(e.target.value)}
-                placeholder="Ex. VIR-2026-07-INT-042"
-              />
-              <p className="text-xs text-muted-foreground">
-                Utilisée pour tracer côté ops le virement Strada →
-                concessionnaire.
-              </p>
-            </div>
-          )}
+                <div className="space-y-4 pt-1 text-sm">
+                  <div className="rounded border bg-muted/40 px-3 py-2 font-mono text-xs">
+                    Commande : {order.orderNumber} · statut cible :{' '}
+                    {ORDER_STATUS_LABELS[pendingStatus]}
+                  </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setPendingStatus(null)}
-              disabled={transitionMutation.isPending}
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={confirmTransition}
-              disabled={transitionMutation.isPending}
-              variant={pendingStatus === 'cancelled' ? 'destructive' : 'default'}
-            >
-              {transitionMutation.isPending ? 'Envoi…' : 'Confirmer'}
-            </Button>
-          </DialogFooter>
+                  {meta.prerequisites && meta.prerequisites.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Prérequis
+                      </p>
+                      <ul className="list-inside list-disc space-y-1 text-sm">
+                        {meta.prerequisites.map((p) => (
+                          <li key={p}>{p}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {meta.effects.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Ce qui va se passer
+                      </p>
+                      <ul className="list-inside list-disc space-y-1 text-sm">
+                        {meta.effects.map((e) => (
+                          <li key={e}>{e}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {meta.warnings && meta.warnings.length > 0 && (
+                    <div className="space-y-1 rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-amber-900 dark:text-amber-200">
+                        Attention
+                      </p>
+                      <ul className="list-inside list-disc space-y-1 text-sm text-amber-950 dark:text-amber-100">
+                        {meta.warnings.map((w) => (
+                          <li key={w}>{w}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {meta.inputs?.map((input) => {
+                    if (input.key === 'payoutReference') {
+                      return (
+                        <div key={input.key} className="space-y-2 pt-1">
+                          <Label htmlFor="payout-ref">
+                            {input.label}
+                            {input.required && (
+                              <span className="ml-1 text-destructive">*</span>
+                            )}
+                          </Label>
+                          <Input
+                            id="payout-ref"
+                            autoFocus
+                            value={payoutReference}
+                            onChange={(e) => setPayoutReference(e.target.value)}
+                            placeholder={input.placeholder}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {input.hint}
+                          </p>
+                        </div>
+                      )
+                    }
+                    return null
+                  })}
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setPendingStatus(null)}
+                    disabled={transitionMutation.isPending}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={confirmTransition}
+                    disabled={transitionMutation.isPending}
+                    variant={meta.confirmVariant}
+                  >
+                    {transitionMutation.isPending ? 'Envoi…' : meta.confirmLabel}
+                  </Button>
+                </DialogFooter>
+              </>
+            )
+          })()}
         </DialogContent>
       </Dialog>
 

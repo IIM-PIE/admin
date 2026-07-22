@@ -59,7 +59,8 @@ jobs:
           push: true
           build-args: |
             VITE_API_URL=${{ github.ref == 'refs/heads/main' && secrets.VITE_API_URL || secrets.VITE_API_URL_PREPROD }}
-            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
+            VITE_SENTRY_DSN=${{ github.ref == 'refs/heads/main' && secrets.VITE_SENTRY_DSN || secrets.VITE_SENTRY_DSN_PREPROD }}
+            VITE_SENTRY_ENVIRONMENT=${{ github.ref == 'refs/heads/main' && 'production' || 'preprod' }}
           tags: |
             ${{ env.IMAGE }}:${{ github.ref == 'refs/heads/main' && github.sha || format('preprod-{0}', github.sha) }}
             ${{ env.IMAGE }}:${{ github.ref == 'refs/heads/main' && 'latest' || 'preprod' }}

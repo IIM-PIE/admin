@@ -19,8 +19,11 @@ COPY . .
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 # VITE_SENTRY_DSN : DSN GlitchTip du front (public) — build-time, compilé dans le bundle.
+# Un projet GlitchTip distinct par environnement, sinon prod et preprod se mélangent.
 ARG VITE_SENTRY_DSN
 ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
+ARG VITE_SENTRY_ENVIRONMENT
+ENV VITE_SENTRY_ENVIRONMENT=$VITE_SENTRY_ENVIRONMENT
 
 RUN npm run build
 

@@ -270,25 +270,38 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 }
 
 /**
- * Étape fonctionnelle du workflow (1..9). 0 = annulée.
+ * Étape fonctionnelle courante du workflow — celle qui est EN ATTENTE
+ * (rendue en 🟦 bleu par la timeline). 0 = annulée, 10 = tout terminé
+ * (livré, aucune étape courante, toutes en 🟩 vert).
+ *
+ * Refonte 2026-07-24 : chaque `OrderStatus` décrit une action au passé
+ * (« Acompte encaissé », « Pièces validées », « Reçu par le pro »…) — donc
+ * l'étape *représentée* par ce status est en fait VALIDÉE, et l'étape
+ * *courante* est la suivante (celle qui attend la prochaine action).
+ * Sans ce décalage, on avait le décalage visuel remonté 2026-07-24 :
+ * « le pro clique confirmer virement → step 5 reste bleu au lieu de
+ * passer vert avec step 6 courante ».
+ *
+ * Le seul status vraiment "en attente" est `awaiting_client_docs` — pour
+ * lui, currentStep = 2 (l'étape est bien celle en cours).
  */
 export const ORDER_STATUS_STEP: Record<OrderStatus, number> = {
-  deposit_paid_reserved: 1,
-  awaiting_client_docs: 2,
-  client_docs_validated: 3,
-  payout_initiated: 4,
-  payout_confirmed: 5,
-  sale_docs_prepared: 6,
-  ready_for_pickup: 7,
-  in_transit: 8,
-  delivered: 9,
+  deposit_paid_reserved: 2, // acompte encaissé → attente docs client
+  awaiting_client_docs: 2, // vraie attente docs client
+  client_docs_validated: 4, // pièces validées + virement reçu → attente virement pro
+  payout_initiated: 5, // virement Strada émis → attente confirmation pro
+  payout_confirmed: 6, // pro a confirmé → attente docs de vente
+  sale_docs_prepared: 7, // docs prêts → attente déclaration pro dispo
+  ready_for_pickup: 8, // véhicule prêt → attente départ transporteur
+  in_transit: 9, // parti → attente livraison client
+  delivered: 10, // livré, final — toutes les étapes vertes
   cancelled: 0,
-  // Deprecated — même étape que leur successeur
-  deposit_pending: 1,
+  // Deprecated — alignés sur leur successeur logique
+  deposit_pending: 2,
   client_docs_pending: 2,
   balance_pending: 2,
-  balance_escrowed: 3,
-  b2b_docs_uploaded: 6,
+  balance_escrowed: 4,
+  b2b_docs_uploaded: 7,
 }
 
 /**

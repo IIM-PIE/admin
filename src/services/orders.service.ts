@@ -246,15 +246,20 @@ export const ordersService = {
  */
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   // Actifs
-  deposit_paid_reserved: 'Acompte versé — réservé',
-  awaiting_client_docs: 'En attente des pièces client',
-  client_docs_validated: 'Pièces client validées',
-  payout_initiated: 'Paiement garanti par Strada',
-  payout_confirmed: 'Virement Strada → Pro effectué',
-  sale_docs_prepared: 'Docs de vente préparés',
-  ready_for_pickup: 'Prêt pour enlèvement',
-  in_transit: 'En transit',
-  delivered: 'Livré',
+  // Aligné byte-for-byte avec `backend/src/admin-orders/admin-orders.state-machine.ts::ORDER_STATUS_LABELS`.
+  // Chaque libellé décrit une action DÉJÀ ACCOMPLIE — feedback Didier/Eclipse
+  // 2026-07-23 : "Paiement garanti par Strada" (ancien) laissait penser qu'on
+  // attend, alors que Strada a déjà émis le virement à ce statut. Pas de flèches.
+  // À terme ce mapping disparaît au profit de order.statusLabel exposé par le back.
+  deposit_paid_reserved: 'Acompte encaissé, véhicule réservé',
+  awaiting_client_docs: 'En attente des pièces du client',
+  client_docs_validated: 'Pièces du client validées et virement reçu',
+  payout_initiated: 'Virement Strada émis vers le concessionnaire',
+  payout_confirmed: 'Virement reçu par le pro',
+  sale_docs_prepared: 'Documents de vente préparés',
+  ready_for_pickup: 'Véhicule prêt pour enlèvement',
+  in_transit: 'En route vers la France',
+  delivered: 'Livré au client',
   cancelled: 'Annulée',
   // Deprecated
   deposit_pending: 'Acompte en attente (obsolète)',
@@ -350,11 +355,14 @@ export const ORDER_ROLLBACK_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 }
 
 export const STEP_LABELS: Record<number, string> = {
-  1: 'Réservation + acompte',
+  // Labels courts pour la timeline compact (badges d'étape). Alignés sur
+  // ORDER_STATUS_LABELS mais raccourcis. Chaque libellé décrit l'action
+  // accomplie à cette étape. Feedback Didier 2026-07-23.
+  1: 'Acompte encaissé',
   2: 'Pièces client',
   3: 'Pièces validées',
-  4: 'Paiement garanti',
-  5: 'Virement Strada → Pro',
+  4: 'Virement Strada émis',
+  5: 'Reçu par le pro',
   6: 'Docs de vente',
   7: 'Enlèvement',
   8: 'Transit',

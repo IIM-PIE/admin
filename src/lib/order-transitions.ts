@@ -57,13 +57,19 @@ export const ORDER_TRANSITION_META: Partial<Record<OrderStatus, TransitionMeta>>
   client_docs_validated: {
     title: 'Forcer la validation des pièces',
     description:
-      "Passer la commande à « Pièces client validées » sans passer par la validation doc par doc.",
+      "Bascule manuelle vers « Pièces client validées ». En flow normal, cette bascule est AUTOMATIQUE dès que les 3 pièces sont validées individuellement au-dessus — utilise ce bouton uniquement si l'auto-transition n'a pas eu lieu (ex: docs reçus hors app, cas ops).",
+    prerequisites: [
+      "Les 3 pièces obligatoires (CNI, justif de domicile, justif de virement) doivent avoir été validées individuellement au-dessus.",
+      "Le virement du solde client doit être visible sur le compte bancaire Strada.",
+    ],
     effects: [
-      "escrowReceivedAt posé (Strada acte avoir reçu le solde côté banque).",
+      "escrowReceivedAt posé (Strada acte la réception du solde).",
       "Le client reçoit une notif « Pièces validées ».",
+      "L'étape 2 passe en 🟩 vert coché, l'étape 3 devient courante.",
     ],
     warnings: [
-      "À n'utiliser que si l'auto-transition ne se déclenche pas (ex: docs uploadés hors app). Le flow normal : dès que les 3 pièces client sont validées une à une via l'écran doc, la commande bascule automatiquement.",
+      "Le back refuse la bascule si les 3 pièces ne sont pas toutes en « validated ». Vérifie le compteur x/3.",
+      "Rejeter une pièce après la bascule fait rollback auto vers « En attente pièces client » — l'étape 2 redevient courante.",
     ],
     confirmLabel: 'Forcer la bascule',
     confirmVariant: 'default',

@@ -1,4 +1,17 @@
-import { Check, Circle, XCircle } from 'lucide-react'
+import {
+  Check,
+  ClipboardCheck,
+  FileClock,
+  Flag,
+  HandCoins,
+  Landmark,
+  Package,
+  Send,
+  ShieldCheck,
+  Truck,
+  XCircle,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   ORDER_STATUS_STEP,
@@ -7,18 +20,24 @@ import {
 } from '@/services/orders.service'
 
 /**
- * Timeline des 9 étapes d'une commande Strada Auto — v2 (refactor du 18
- * juillet 2026, contrat commun Selim/Bogdan).
+ * Timeline des 9 étapes d'une commande Strada Auto — v3 (2026-07-23).
  *
- * Contrairement à `reservation-workflow-timeline.tsx` qui décrit la
- * partie B2C côté client (réservation → caution → livraison), ce composant
- * est spécifique à Order et reflète les 9 étapes du workflow unifié.
+ * Deux changements par rapport à v2 :
+ *  - **icônes contextuelles** par étape (HandCoins → FileClock → ShieldCheck
+ *    → Send → …) pour donner du signifiant visuel immédiat au-delà du
+ *    simple numéro. Demande Bogdan : plus de « tous les ronds se
+ *    ressemblent » quand on scanne le stepper.
+ *  - **règle visuelle unifiée** stricte :
+ *      · étape < étape courante → 🟩 done (fond vert + Check)
+ *      · étape == étape courante → 🟦 active (bordure primary + ring
+ *        + icône contextuelle bleue)
+ *      · étape > étape courante → ⚪ todo (fond neutre, icône grise)
+ *      · status == cancelled → 🟥 tout en destructive (XCircle)
  *
- * L'état de chaque étape est calculé à partir du `OrderStatus` courant :
- *   - étape strictement < étape courante → done
- *   - étape == étape courante → active
- *   - étape > étape courante → todo
- *   - status == cancelled → toutes les étapes marquées cancelled
+ * Aucune logique métier ici — seulement du rendu à partir de
+ * `Order.status`. Le back gère toutes les transitions (auto-transition
+ * step 2 → 3 dès 3 docs validés, rollback auto step 3 → 2 sur reject
+ * d'une pièce obligatoire).
  */
 interface OrderWorkflowTimelineProps {
   status: OrderStatus
@@ -26,6 +45,20 @@ interface OrderWorkflowTimelineProps {
 }
 
 const STEPS: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+// Icônes contextuelles par étape — utilisées quand l'étape est `active` ou
+// `todo`. Quand `done`, on affiche le Check ✓ pour signifier "validé".
+const STEP_ICON: Record<number, LucideIcon> = {
+  1: HandCoins, // Acompte encaissé
+  2: FileClock, // En attente des pièces client
+  3: ShieldCheck, // Pièces validées + virement reçu
+  4: Send, // Virement Strada émis vers le pro
+  5: Landmark, // Virement reçu par le pro
+  6: ClipboardCheck, // Documents de vente préparés
+  7: Package, // Véhicule prêt pour enlèvement
+  8: Truck, // En route vers la France
+  9: Flag, // Livré au client
+}
 
 export function OrderWorkflowTimeline({
   status,
@@ -52,6 +85,8 @@ export function OrderWorkflowTimeline({
           state = 'active'
         }
 
+        const Icon = STEP_ICON[step]
+
         return (
           <li
             key={step}
@@ -60,29 +95,34 @@ export function OrderWorkflowTimeline({
             <div className="flex w-full items-center">
               <span
                 className={cn(
-                  'z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 bg-background text-xs font-semibold shrink-0',
+                  'z-10 flex h-9 w-9 items-center justify-center rounded-full border-2 bg-background text-xs font-semibold shrink-0 transition-colors',
                   state === 'done' &&
                     'border-emerald-500 bg-emerald-500 text-white',
                   state === 'active' &&
                     'border-primary text-primary ring-4 ring-primary/15',
-                  state === 'todo' && 'border-muted text-muted-foreground',
+                  state === 'todo' &&
+                    'border-muted text-muted-foreground/70',
                   state === 'cancelled' &&
                     'border-destructive text-destructive',
                 )}
-                aria-label={`Étape ${step}`}
+                aria-label={`Étape ${step} — ${STEP_LABELS[step]}`}
+                title={STEP_LABELS[step]}
               >
                 {state === 'done' ? (
                   <Check className="h-4 w-4" strokeWidth={3} />
                 ) : state === 'cancelled' ? (
                   <XCircle className="h-4 w-4" strokeWidth={2.5} />
                 ) : (
-                  step
+                  <Icon
+                    className="h-4 w-4"
+                    strokeWidth={state === 'active' ? 2.4 : 2}
+                  />
                 )}
               </span>
               {!isLast && (
                 <span
                   className={cn(
-                    'h-0.5 flex-1',
+                    'h-0.5 flex-1 transition-colors',
                     state === 'done' ? 'bg-emerald-500' : 'bg-muted',
                   )}
                   aria-hidden
@@ -91,20 +131,22 @@ export function OrderWorkflowTimeline({
             </div>
             {!compact && (
               <div className="mt-2 max-w-[120px] text-[11px] leading-tight">
+                <div className="text-[10px] font-mono text-muted-foreground/60 mb-0.5">
+                  {step.toString().padStart(2, '0')}
+                </div>
                 <div
                   className={cn(
                     'font-medium',
+                    state === 'done' && 'text-emerald-700 dark:text-emerald-400',
                     state === 'active' && 'text-primary',
                     state === 'cancelled' && 'text-destructive',
-                    (state === 'todo' || state === 'cancelled') &&
-                      'text-muted-foreground',
+                    state === 'todo' && 'text-muted-foreground',
                   )}
                 >
                   {STEP_LABELS[step]}
                 </div>
               </div>
             )}
-            {!compact && <Circle className="sr-only" />}
           </li>
         )
       })}

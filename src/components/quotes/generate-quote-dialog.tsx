@@ -100,13 +100,16 @@ export function GenerateQuoteDialog({
       return { quote, pdfBlob }
     },
     onSuccess: ({ pdfBlob }) => {
+      // Ouvre le PDF en preview dans un nouvel onglet plutôt que de
+      // forcer le download. `link.download = …` (retiré) écrasait
+      // Content-Disposition=inline renvoyé par le back et forçait le
+      // téléchargement local. window.open + target=_blank laisse le
+      // browser afficher le viewer PDF natif ; le user peut toujours
+      // sauver depuis ce viewer si besoin. Bogdan 2026-07-24.
       const url = URL.createObjectURL(pdfBlob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `devis-${vehicle.brand}-${vehicle.model}.pdf`.replace(/\s+/g, '_')
-      link.click()
+      window.open(url, '_blank', 'noopener,noreferrer')
       setTimeout(() => URL.revokeObjectURL(url), 60000)
-      toast.success('Devis généré et téléchargé')
+      toast.success('Devis généré')
       onOpenChange(false)
     },
     onError: (error: any) => {

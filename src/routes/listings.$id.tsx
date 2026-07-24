@@ -190,17 +190,44 @@ function ReservationDetailPage() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg border bg-muted/30 p-4">
-              <p className="text-xs text-muted-foreground">Prix</p>
+              <p className="text-xs text-muted-foreground">Prix véhicule (Italie)</p>
               <p className="text-2xl font-semibold">
                 {listing.price.toLocaleString('fr-FR')} €
               </p>
+              {listing.referenceFrancePrice != null && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Moyenne constatée France :{' '}
+                  <span className="font-medium">
+                    {Number(listing.referenceFrancePrice).toLocaleString('fr-FR')} €
+                  </span>
+                </p>
+              )}
             </div>
-            <div className="rounded-lg border bg-muted/30 p-4">
-              <p className="text-xs text-muted-foreground">Coût import</p>
-              <p className="text-2xl font-semibold text-muted-foreground">
-                {listing.importCost.toLocaleString('fr-FR')} €
-              </p>
-            </div>
+            {listing.estimatedMinTotal ? (
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <p className="text-xs text-muted-foreground">Total Strada estimé (dès)</p>
+                <p className="text-2xl font-semibold">
+                  {Math.round(listing.estimatedMinTotal.total).toLocaleString('fr-FR')} €
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Prix véhicule + commission Strada + carte grise ({listing.estimatedMinTotal.registrationTaxRegion})
+                  + livraison + assurance
+                </p>
+                {listing.referenceFrancePrice != null && (
+                  <p className="text-xs mt-2 font-medium text-emerald-700 dark:text-emerald-400">
+                    Économie estimée :{' '}
+                    − {Math.round(Number(listing.referenceFrancePrice) - listing.estimatedMinTotal.total).toLocaleString('fr-FR')} €
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <p className="text-xs text-muted-foreground">Coût import (legacy)</p>
+                <p className="text-2xl font-semibold text-muted-foreground">
+                  {listing.importCost.toLocaleString('fr-FR')} €
+                </p>
+              </div>
+            )}
             <Button
               type="button"
               variant="secondary"

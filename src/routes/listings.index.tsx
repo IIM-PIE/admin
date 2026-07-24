@@ -2418,8 +2418,8 @@ function ListingsPage() {
                   <TableRow>
                     <TableHead>Annonce</TableHead>
                     <TableHead>Année</TableHead>
-                    <TableHead>Prix</TableHead>
-                    <TableHead>Coût import</TableHead>
+                    <TableHead>Prix Italie</TableHead>
+                    <TableHead>Total Strada estimé</TableHead>
                     <TableHead>Kilométrage</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -2437,10 +2437,19 @@ function ListingsPage() {
                       </TableCell>
                       <TableCell>{vehicle.year}</TableCell>
                       <TableCell>
-                        {vehicle.price.toLocaleString("fr-FR")} €
+                        <div className="flex flex-col leading-tight">
+                          <span>{vehicle.price.toLocaleString("fr-FR")} €</span>
+                          {vehicle.referenceFrancePrice != null && (
+                            <span className="text-[10px] text-muted-foreground">
+                              FR&nbsp;{Number(vehicle.referenceFrancePrice).toLocaleString("fr-FR")}&nbsp;€
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {vehicle.importCost.toLocaleString("fr-FR")} €
+                        {vehicle.estimatedMinTotal
+                          ? `dès ${Math.round(vehicle.estimatedMinTotal.total).toLocaleString("fr-FR")} €`
+                          : `${vehicle.importCost.toLocaleString("fr-FR")} €`}
                       </TableCell>
                       <TableCell>
                         {vehicle.mileage.toLocaleString("fr-FR")} km
@@ -2581,21 +2590,37 @@ function ListingsPage() {
                           {getStatusBadge(vehicle.status)}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Prix</p>
-                            <p className="font-semibold">
+                        <div className="rounded-md border bg-muted/40 p-2 text-sm space-y-1">
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-xs text-muted-foreground">Prix véhicule (Italie)</span>
+                            <span className="font-semibold">
                               {vehicle.price.toLocaleString("fr-FR")} €
-                            </p>
+                            </span>
                           </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              Coût import
-                            </p>
-                            <p className="font-semibold text-muted-foreground">
-                              {vehicle.importCost.toLocaleString("fr-FR")} €
-                            </p>
-                          </div>
+                          {vehicle.estimatedMinTotal && (
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-xs text-muted-foreground">Total Strada estimé (dès)</span>
+                              <span className="text-sm">
+                                {Math.round(vehicle.estimatedMinTotal.total).toLocaleString("fr-FR")} €
+                              </span>
+                            </div>
+                          )}
+                          {vehicle.referenceFrancePrice != null && (
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-xs text-muted-foreground">Prix moyen constaté France</span>
+                              <span className="text-sm text-muted-foreground">
+                                {Number(vehicle.referenceFrancePrice).toLocaleString("fr-FR")} €
+                              </span>
+                            </div>
+                          )}
+                          {vehicle.estimatedMinTotal && vehicle.referenceFrancePrice != null && (
+                            <div className="flex items-baseline justify-between border-t border-border/60 pt-1 mt-1">
+                              <span className="text-xs font-medium">Économie estimée</span>
+                              <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                                − {Math.round(Number(vehicle.referenceFrancePrice) - vehicle.estimatedMinTotal.total).toLocaleString("fr-FR")} €
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {/* stopPropagation : le dropdown Actions ne doit pas

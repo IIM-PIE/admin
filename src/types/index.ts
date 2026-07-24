@@ -67,6 +67,28 @@ export interface Vehicle {
   status: VehicleStatus
   createdAt: string
   updatedAt: string
+  /**
+   * Cote moyenne constatée en France (La Centrale / L'Argus / AutoScout24 FR).
+   * Nullable : si absent, l'UI n'affiche pas le bloc comparaison prix.
+   */
+  referenceFrancePrice?: number | string | null
+  /**
+   * Total "à partir de" que Strada facturerait au client — prix véhicule +
+   * commission Strada 6.5% + carte grise **région la moins chère** +
+   * livraison 650 € + assurance transport 0.5%. Champ dérivé calculé at-
+   * request-time côté back par `enrichVehiclesWithEstimatedTotal`. Nullable
+   * si `fiscalPower` absent (impossible d'estimer la carte grise).
+   */
+  estimatedMinTotal?: {
+    vehiclePrice: number
+    commissionStrada: number
+    registrationTaxMin: number
+    registrationTaxRegion: string
+    delivery: number
+    transportInsurance: number
+    fixedFees: number
+    total: number
+  } | null
   seller?: Seller
   reservedByUser?: User
   _count?: {

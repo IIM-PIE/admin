@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as SellersRouteImport } from './routes/sellers'
+import { Route as ReviewsRouteImport } from './routes/reviews'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListingsRouteImport } from './routes/listings'
@@ -36,6 +37,11 @@ const StatisticsRoute = StatisticsRouteImport.update({
 const SellersRoute = SellersRouteImport.update({
   id: '/sellers',
   path: '/sellers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewsRoute = ReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/reviews': typeof ReviewsRoute
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/conversations': typeof ConversationsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/reviews': typeof ReviewsRoute
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/reviews': typeof ReviewsRoute
   '/sellers': typeof SellersRoute
   '/statistics': typeof StatisticsRoute
   '/users': typeof UsersRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/listings'
     | '/login'
     | '/notifications'
+    | '/reviews'
     | '/sellers'
     | '/statistics'
     | '/users'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/conversations'
     | '/login'
     | '/notifications'
+    | '/reviews'
     | '/sellers'
     | '/statistics'
     | '/users'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/listings'
     | '/login'
     | '/notifications'
+    | '/reviews'
     | '/sellers'
     | '/statistics'
     | '/users'
@@ -187,6 +199,7 @@ export interface RootRouteChildren {
   ListingsRoute: typeof ListingsRouteWithChildren
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
+  ReviewsRoute: typeof ReviewsRoute
   SellersRoute: typeof SellersRoute
   StatisticsRoute: typeof StatisticsRoute
   UsersRoute: typeof UsersRoute
@@ -216,6 +229,13 @@ declare module '@tanstack/react-router' {
       path: '/sellers'
       fullPath: '/sellers'
       preLoaderRoute: typeof SellersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reviews': {
+      id: '/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof ReviewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -311,6 +331,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListingsRoute: ListingsRouteWithChildren,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
+  ReviewsRoute: ReviewsRoute,
   SellersRoute: SellersRoute,
   StatisticsRoute: StatisticsRoute,
   UsersRoute: UsersRoute,

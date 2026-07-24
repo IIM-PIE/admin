@@ -10,6 +10,7 @@ import {
   BarChart3,
   Package,
   Star,
+  FileCheck,
 } from 'lucide-react'
 
 export function Sidebar() {
@@ -42,6 +43,7 @@ export function Sidebar() {
               { icon: CreditCard, label: 'Paiements', href: '/payments' },
               { icon: MessageSquare, label: 'Conversations', href: '/conversations' },
               { icon: Star, label: 'Reviews', href: '/reviews' },
+              { icon: FileCheck, label: 'Docs perso client', href: '/client-documents' },
             ]
           : []),
       ],

@@ -17,6 +17,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as ConversationsRouteImport } from './routes/conversations'
+import { Route as ClientDocumentsRouteImport } from './routes/client-documents'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PaymentsIndexRouteImport } from './routes/payments.index'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
@@ -64,6 +65,11 @@ const ConversationsRoute = ConversationsRouteImport.update({
   path: '/conversations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClientDocumentsRoute = ClientDocumentsRouteImport.update({
+  id: '/client-documents',
+  path: '/client-documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -97,6 +103,7 @@ const ListingsIdRoute = ListingsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/client-documents': typeof ClientDocumentsRoute
   '/conversations': typeof ConversationsRoute
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/client-documents': typeof ClientDocumentsRoute
   '/conversations': typeof ConversationsRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
@@ -129,6 +137,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/client-documents': typeof ClientDocumentsRoute
   '/conversations': typeof ConversationsRoute
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/client-documents'
     | '/conversations'
     | '/listings'
     | '/login'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/client-documents'
     | '/conversations'
     | '/login'
     | '/notifications'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/client-documents'
     | '/conversations'
     | '/listings'
     | '/login'
@@ -195,6 +207,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClientDocumentsRoute: typeof ClientDocumentsRoute
   ConversationsRoute: typeof ConversationsRoute
   ListingsRoute: typeof ListingsRouteWithChildren
   LoginRoute: typeof LoginRoute
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConversationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/client-documents': {
+      id: '/client-documents'
+      path: '/client-documents'
+      fullPath: '/client-documents'
+      preLoaderRoute: typeof ClientDocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -327,6 +347,7 @@ const ListingsRouteWithChildren = ListingsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClientDocumentsRoute: ClientDocumentsRoute,
   ConversationsRoute: ConversationsRoute,
   ListingsRoute: ListingsRouteWithChildren,
   LoginRoute: LoginRoute,

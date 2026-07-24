@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
+import { Star } from 'lucide-react'
+import apiClient from '@/lib/api-client'
 import { listingsService } from '@/services/listings.service'
 import { resolveImageUrl } from '@/lib/api-client'
 import { conversationsService } from '@/services/conversations.service'
@@ -421,7 +423,10 @@ function ReservationDetailPage() {
                   <div className="rounded-lg border p-4">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Vendeur</p>
                     <div className="mt-3 space-y-1 text-sm">
-                      <p className="font-medium">{listing.seller.name}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">{listing.seller.name}</p>
+                        <SellerRating sellerId={listing.seller.id} />
+                      </div>
                       <p className="text-muted-foreground">
                         {listing.seller.type === 'professionnel' ? 'Professionnel' : 'Particulier'} ·{' '}
                         {listing.seller.location}
@@ -548,6 +553,32 @@ function ReservationDetailPage() {
         />
       )}
     </DashboardLayout>
+  )
+}
+
+/**
+ * Note moyenne du concessionnaire (feature reviews 2026-07-24). Consomme
+ * `/reviews/sellers/:sellerId/rating` — endpoint public sans auth requise
+ * — pour afficher un badge ⭐ 4.7 · 12 avis à côté du nom du vendeur.
+ * Silent fallback si aucune review publiée (composant ne rend rien).
+ */
+function SellerRating({ sellerId }: { sellerId: string }) {
+  const { data } = useQuery({
+    queryKey: ['seller-rating', sellerId],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{
+        averageRating: number | null
+        count: number
+      }>(`/reviews/sellers/${sellerId}/rating`)
+      return data
+    },
+  })
+  if (!data || data.count === 0 || data.averageRating == null) return null
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
+      <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+      {data.averageRating.toFixed(1)} · {data.count} avis
+    </span>
   )
 }
 

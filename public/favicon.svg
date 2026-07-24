@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="skyH" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="45%" stop-color="#fb923c"/>
+      <stop offset="80%" stop-color="#e11d48"/>
+      <stop offset="100%" stop-color="#7c2d12"/>
+    </linearGradient>
+    <linearGradient id="landH" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#78350f"/>
+      <stop offset="100%" stop-color="#431407"/>
+    </linearGradient>
+    <linearGradient id="roadH" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fef3c7"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#skyH)"/>
+  <circle cx="46" cy="26" r="9" fill="#fef3c7" opacity="0.9"/>
+  <circle cx="46" cy="26" r="13" fill="#fef3c7" opacity="0.25"/>
+  <path d="M 0 42 Q 12 38 22 40 L 28 34 Q 34 30 42 34 L 50 30 Q 58 28 64 32 L 64 64 L 0 64 Z" fill="url(#landH)"/>
+  <path d="M 32 64 Q 30 52 34 44 Q 38 38 32 34" fill="none" stroke="url(#roadH)" stroke-width="3" stroke-linecap="round" opacity="0.95"/>
+  <path d="M 32 60 L 32 58 M 33 52 L 33 50 M 34 46 L 34 44" stroke="#7c2d12" stroke-width="0.8" stroke-linecap="round"/>
+  <g transform="translate(20 44)">
+    <ellipse cx="0" cy="0" rx="4" ry="2" fill="#1c0a03"/>
+    <path d="M -3 -0.5 L -2 -3 L 2 -3 L 3 -0.5 Z" fill="#7c2d12"/>
+    <circle cx="-2" cy="1" r="0.8" fill="#fef3c7"/>
+    <circle cx="2" cy="1" r="0.8" fill="#fef3c7"/>
+  </g>
+  <path d="M 10 22 L 10.5 20 L 11 22 M 15 26 L 15.5 24 L 16 26" stroke="#fef3c7" stroke-width="0.6" opacity="0.6"/>
+</svg>

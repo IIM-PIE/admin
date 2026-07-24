@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { DashboardLayout } from '@/components/layout/dashboard-layout'
+import { authService } from '@/services/auth.service'
 import {
   Card,
   CardContent,
@@ -36,10 +37,10 @@ import { reviewsService, type Review, type ReviewStatus } from '@/services/revie
  */
 
 export const Route = createFileRoute('/reviews')({
-  beforeLoad: ({ context }: any) => {
-    const auth = context?.auth
-    if (!auth?.isAuthenticated || !auth?.hasRole?.(['admin', 'agent'])) {
-      throw redirect({ to: '/login' })
+  beforeLoad: async () => {
+    const user = await authService.getCurrentUser().catch(() => null)
+    if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+      throw redirect({ to: '/' })
     }
   },
   component: ReviewsPage,

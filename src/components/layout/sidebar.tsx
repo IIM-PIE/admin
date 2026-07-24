@@ -9,6 +9,7 @@ import {
   CreditCard,
   BarChart3,
   Package,
+  Star,
 } from 'lucide-react'
 
 export function Sidebar() {
@@ -40,6 +41,7 @@ export function Sidebar() {
               { icon: Package, label: 'Commandes', href: '/orders' },
               { icon: CreditCard, label: 'Paiements', href: '/payments' },
               { icon: MessageSquare, label: 'Conversations', href: '/conversations' },
+              { icon: Star, label: 'Reviews', href: '/reviews' },
             ]
           : []),
       ],
